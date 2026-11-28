@@ -714,6 +714,9 @@ jobs:
     timeout-minutes: 45
     needs: [javascript, detect-changes, changelog]
     if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success' && (always() && !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped')))
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -774,13 +777,20 @@ jobs:
         shell: bash
         env:
           BASELINE_ARGUMENT: ${{ steps.base-coverage.outputs.argument }}
-          COVERAGE_EXCEPTION: ${{ contains(github.event.pull_request.labels.*.name, 'coverage-exception') }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # A queued run can carry a label snapshot from before a maintainer's change.
+          coverage_exception=false
+          if [ -n "$PR_NUMBER" ]; then
+            coverage_exception=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" \
+              --jq '.labels | map(.name) | index("coverage-exception") != null')
+          fi
           args=(--report coverage-summary.json --baseline coverage-baseline.txt --summary "$GITHUB_STEP_SUMMARY")
           if [ -n "$BASELINE_ARGUMENT" ]; then
             args+=(--previous-baseline /tmp/base-coverage-baseline.txt)
           fi
-          if [ "$COVERAGE_EXCEPTION" = "true" ]; then
+          if [ "$coverage_exception" = "true" ]; then
             args+=(--allow-decrease)
           fi
           rust-script scripts/check-coverage.rs "${args[@]}"

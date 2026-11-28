@@ -102,6 +102,48 @@ test('base coverage is an explicit manual diagnostic and requires the gated base
   ]) assert.ok(mutation('benchmarks.yml', change).length);
 });
 
+test('coverage uses the current pull request label and a failed lookup blocks the gate', () => {
+  const coverage = parse(sources['release.yml']).jobs.coverage;
+  assert.equal(coverage.permissions?.['pull-requests'], 'read');
+  const gate = coverage.steps.find(step => step.name === 'Enforce coverage floor and ratchet');
+  assert.equal(gate.env.PR_NUMBER, '${{ github.event.pull_request.number }}');
+  const commands = `
+    gh() {
+      [ "$1" = api ] && [ "$2" = repos/link-assistant/router/pulls/811 ] || return 42
+      printf '%s\\n' "$CURRENT_LABEL"
+      return "$LOOKUP_STATUS"
+    }
+    function rust-script { printf '%s\\n' "$@"; }
+    ${gate.run}`;
+  const run = (number, currentLabel, lookupStatus, baseline) => spawnSync(
+    'bash', ['-eo', 'pipefail', '-c', commands], {
+      encoding: 'utf8',
+      env: {
+        ...process.env, GITHUB_REPOSITORY: 'link-assistant/router', GITHUB_STEP_SUMMARY: 'summary.md',
+        PR_NUMBER: number, CURRENT_LABEL: currentLabel, LOOKUP_STATUS: lookupStatus,
+        BASELINE_ARGUMENT: baseline,
+      },
+    },
+  );
+  const expected = [
+    'scripts/check-coverage.rs', '--report', 'coverage-summary.json',
+    '--baseline', 'coverage-baseline.txt', '--summary', 'summary.md',
+  ];
+  const previous = ['--previous-baseline', '/tmp/base-coverage-baseline.txt'];
+  for (const [number, label, lookup, baseline, expectedArgs] of [
+    ['811', 'true', '0', 'present', [...expected, ...previous, '--allow-decrease']],
+    ['811', 'false', '0', 'present', [...expected, ...previous]],
+    ['', 'false', '42', '', expected],
+  ]) {
+    const result = run(number, label, lookup, baseline);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(result.stdout.trim().split('\n'), expectedArgs);
+  }
+  const failed = run('811', 'true', '42', 'present');
+  assert.equal(failed.status, 42);
+  assert.equal(failed.stdout, '');
+});
+
 test('lane-introduced lint checks always run on the caller commit and elsewhere only when present', { timeout: 30_000 }, () => {
   const jobs = parse(sources[MANUAL_WORKFLOW]).jobs;
   for (const [command, file] of Object.entries(LANE_FILES)) {
