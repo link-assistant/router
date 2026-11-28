@@ -36,7 +36,11 @@ async fn configuration_writers_cannot_change_host_authority() {
         let patch = json!({"cli": {(key): value.clone()}});
         for (method, uri, body) in [("PATCH", ROOT, patch), ("PUT", pointer.as_str(), value)] {
             let (status, response) = call(&app, method, uri, &writer, Some(body)).await;
-            assert_eq!(status, StatusCode::BAD_REQUEST, "{method} {uri}: {response}");
+            assert_eq!(
+                status,
+                StatusCode::BAD_REQUEST,
+                "{method} {uri}: {response}"
+            );
             assert_eq!(
                 response["error"]["message"],
                 "this CLI setting may only be changed in the local TOML file"
