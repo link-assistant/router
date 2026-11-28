@@ -2,6 +2,7 @@
 use crate::app_state::AppState;
 use crate::management_access::normalize_ip;
 use crate::proxy::error_response;
+use crate::route_contract::RouteAuth;
 use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{HeaderValue, StatusCode};
 use axum::middleware::Next;
@@ -55,12 +56,31 @@ pub async fn gate(
 }
 
 /// Authenticate protected management routes and update the shared counter.
-pub async fn authenticate(State(state): State<AppState>, request: Request, next: Next) -> Response {
+pub async fn authenticate(
+    State(state): State<AppState>,
+    mut request: Request,
+    next: Next,
+) -> Response {
     let ip = request
         .extensions()
         .get::<ManagementPeer>()
         .map(|peer| peer.0);
-    if !crate::proxy::is_admin_authorised(&state, request.headers()) {
+    let auth = crate::route_contract::route_for_path(request.method(), request.uri().path())
+        .map(|route| route.auth);
+    let config = matches!(auth, Some(RouteAuth::ConfigRead | RouteAuth::ConfigWrite));
+    let writer = config
+        .then(|| {
+            crate::proxy::extract_admin_bearer(request.headers())
+                .and_then(|token| state.token_manager.validate_token(token).ok())
+                .filter(|claims| claims.scope == crate::token::CONFIG_WRITE_SCOPE)
+        })
+        .flatten();
+    let admin = if config {
+        crate::proxy::is_explicit_admin(&state, request.headers())
+    } else {
+        crate::proxy::is_admin_authorised(&state, request.headers())
+    };
+    if writer.is_none() && !admin {
         return ip.map_or_else(
             || {
                 error_response(
@@ -74,6 +94,18 @@ pub async fn authenticate(State(state): State<AppState>, request: Request, next:
     }
     if let Some(ip) = ip {
         state.admin.management_access().success(ip);
+    }
+    if auth == Some(RouteAuth::ConfigWrite) {
+        let Some(writer) = writer else {
+            return error_response(
+                StatusCode::FORBIDDEN,
+                "permission_error",
+                "runtime configuration writes require config:write scope",
+            );
+        };
+        request
+            .extensions_mut()
+            .insert(crate::runtime_config::api::Writer(writer.sub));
     }
     next.run(request).await
 }

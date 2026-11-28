@@ -68,12 +68,15 @@ impl TokenManager {
             if record.revoked {
                 return Err(TokenError::Revoked);
             }
-            if record.client_kind != token_data.claims.client_kind
+            if (token_data.claims.scope == super::CONFIG_WRITE_SCOPE
+                && record.scope != super::CONFIG_WRITE_SCOPE)
+                || record.client_kind != token_data.claims.client_kind
                 || record.principal_id != token_data.claims.principal_id
             {
                 return Err(TokenError::BindingMismatch);
             }
-        } else if token_data.claims.client_kind.is_some()
+        } else if token_data.claims.scope == super::CONFIG_WRITE_SCOPE
+            || token_data.claims.client_kind.is_some()
             || token_data.claims.principal_id.is_some()
         {
             return Err(TokenError::MissingRecord);
@@ -94,6 +97,12 @@ impl TokenManager {
         headers: &HeaderMap,
     ) -> Result<TokenClaims, TokenError> {
         let verdict = self.validate_token(token);
+        if verdict
+            .as_ref()
+            .is_ok_and(|claims| claims.scope == super::CONFIG_WRITE_SCOPE)
+        {
+            return Err(TokenError::InsufficientScope);
+        }
         let count = crate::auth_diagnostics::first_outcome_in_request();
         if self.emergency.is_active() {
             let bypassed = match &verdict {

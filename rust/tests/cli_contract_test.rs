@@ -113,6 +113,31 @@ fn invalid_configuration_enum_values_are_rejected() {
 }
 
 #[test]
+fn serving_invocations_reject_invalid_runtime_documents() {
+    let data = tempfile::tempdir().expect("temporary Router state");
+    let config = data.path().join("runtime.toml");
+    std::fs::write(&config, "[cli]\nport = 65536\n").unwrap();
+    // Keep the process from binding if document validation is bypassed.
+    for args in [
+        &["--routing-mode", "bogus"][..],
+        &["--routing-mode", "bogus", "serve", "--json"][..],
+    ] {
+        let result = output(
+            router(args)
+                .env("DATA_DIR", data.path())
+                .env("ROUTER_RUNTIME_CONFIG", &config)
+                .env("TOKEN_SECRET", "runtime-config-test-signing-fixture"),
+        );
+        let diagnostic = "runtime configuration does not match its schema";
+        assert_eq!(result.status.code(), Some(2));
+        assert!(
+            String::from_utf8_lossy(&result.stderr).contains(diagnostic)
+                || String::from_utf8_lossy(&result.stdout).contains(diagnostic)
+        );
+    }
+}
+
+#[test]
 fn revoke_and_expire_reject_unknown_token_ids() {
     for operation in ["revoke", "expire"] {
         let data_dir = tempfile::tempdir().expect("temporary token store");

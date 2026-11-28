@@ -45,6 +45,10 @@ fn router_with_features(state: AppState, login_enabled: bool, metrics_enabled: b
         ))
         // Outermost, so the UI assets and the error responses of the auth
         // middleware are hardened too — see [`crate::security_headers`].
+        .layer(from_fn_with_state(
+            state.clone(),
+            crate::runtime_config::cors::middleware,
+        ))
         .layer(from_fn(crate::security_headers::apply))
         .with_state(state)
 }

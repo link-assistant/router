@@ -60,6 +60,7 @@ use self::value_parsers::parse_truthy;
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
 
 mod parsing;
+pub(crate) use parsing::try_parse_invocation;
 pub use parsing::{parse_arguments, try_parse_arguments};
 
 /// Top-level CLI parser.

@@ -25,6 +25,7 @@ use crate::accounts::{RoutingContext, UpstreamObservation};
 use crate::pool_failover::{RetryReason, classify_status};
 use crate::request_routing::ResolvedUpstreamCredential;
 use crate::subscription::SubscriptionProvider;
+use crate::upstream_client::UpstreamSendError;
 
 /// Everything one dispatch needs from the handler.
 pub(super) struct Dispatch<'a> {
@@ -178,7 +179,8 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                 account.as_deref(),
                 &state.client,
                 CookieMode::None,
-            )?;
+            )
+            .map_err(UpstreamSendError::Egress)?;
             let builder = client
                 .request(request.method.clone(), request.upstream_url)
                 .headers(headers)
@@ -186,8 +188,7 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
             let response = state
                 .request_log
                 .send_upstream(request.correlation_id, &client, builder)
-                .await
-                .map_err(|error| error.to_string())?;
+                .await?;
             crate::request_routing::record_claude_evidence(
                 state,
                 account.as_deref(),
@@ -202,7 +203,9 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                     .get("content-type")
                     .and_then(|value| value.to_str().ok())
                     .is_some_and(|value| value.contains("text/event-stream"));
-            crate::pool_response::PoolResponse::prepare(response, probe).await
+            crate::pool_response::PoolResponse::prepare(response, probe)
+                .await
+                .map_err(UpstreamSendError::Egress)
         };
         let outcome = if failover && attempt > 1 {
             let bounded =
@@ -218,7 +221,9 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
         };
         let (mut response, peeked) = match outcome {
             Ok(response) => response,
+            Err(UpstreamSendError::PayloadRule(reason)) => return Err(transport_error(reason)),
             Err(error) => {
+                let error = error.to_string();
                 tracing::error!("Upstream request failed: {error}");
                 if failover && attempt < max_attempts {
                     note_failover(

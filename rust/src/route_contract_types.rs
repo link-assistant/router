@@ -36,6 +36,8 @@ pub enum RouteAuth {
     None,
     Client,
     Admin,
+    ConfigRead,
+    ConfigWrite,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -182,6 +184,12 @@ pub enum RouteId {
     ModelDefinitions,
     Routing,
     CooldownReset,
+    RuntimeConfig,
+    RuntimeConfigYaml,
+    RuntimeConfigSchema,
+    RuntimeConfigStatus,
+    RuntimeConfigReload,
+    RuntimeConfigPointer,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

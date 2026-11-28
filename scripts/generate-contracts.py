@@ -184,6 +184,19 @@ def generate(catalog):
     request_types = {'Routing':'RoutingUpdate','CooldownReset':'CooldownReset','AccountPolicy':'AccountRoutingPolicy','Login':'BeginLoginRequest','LoginCode':'SubmitCodeRequest','Tokens':'IssueTokenRequest','ClientTokens':'IssueClientTokenRequest','RevokeToken':'RevokeTokenRequest','RotateToken':'RotateTokenRequest','RotateClientToken':'RotateClientTokenRequest','Providers':'ProviderUpsert','AdminBootstrap':'TtlRequest','AdminRotate':'TtlRequest','AdminBootstrapConfirm':'ConfirmRequest'}
     components['LoggingPatch'] = obj({'debug':BOOL}, ['debug'])
     request_types['Logging'] = 'LoggingPatch'
+    config_status = obj({
+        'restart_required': array(STRING),
+        'overridden': array(STRING),
+        'reload_error': nullable(STRING),
+    }, ['restart_required', 'overridden', 'reload_error'])
+    config_document = {'type': 'object', 'description': 'See GET /api/management/config/schema for the active CLI-derived schema.'}
+    route_security = {
+        'None': [],
+        'Admin': [{'AdminBearer': []}],
+        'Client': [{'RouterBearer': []}, {'RouterApiKey': []}, {'RouterGoogleKey': []}],
+        'ConfigRead': [{'AdminBearer': []}, {'ConfigWriteBearer': []}],
+        'ConfigWrite': [{'ConfigWriteBearer': []}],
+    }
     paths = {}
     any_methods = {}
     for route in catalog['routes']:
@@ -197,16 +210,33 @@ def generate(catalog):
                 success = ref('NativeModels' if route['name'] in ['CodexModels','GeminiModels'] else 'Models')
             identifier = re.sub(r'[^a-zA-Z0-9]+','_', method.lower()+'_'+path).strip('_')
             content = {'application/json': {'schema':success}}
+            if route['auth'] == 'ConfigRead' or route['auth'] == 'ConfigWrite':
+                if route['name'] == 'RuntimeConfigYaml':
+                    content = {'application/yaml': {'schema': STRING}}
+                elif route['name'] == 'RuntimeConfigPointer' and method in ['GET', 'HEAD']:
+                    content = {'application/json': {'schema': {}}}
+                elif route['name'] in ['RuntimeConfigStatus', 'RuntimeConfigReload'] or method in ['PATCH', 'PUT', 'DELETE']:
+                    content = {'application/json': {'schema': config_status}}
+                else:
+                    content = {'application/json': {'schema': config_document}}
             if route['name'] in ['Health', 'Metrics']: content = {'text/plain':{'schema':STRING}}
             if route['class'].startswith('Service') and method=='POST':
                 content['text/event-stream']={'schema':STRING, 'x-router-event-schema':ref('OpaqueVendorPayload')}
-            op = {'operationId':identifier,'summary':route['name'],'tags':[route['class'].split('(')[0]], 'security':[] if route['auth']=='None' else [{'AdminBearer' if route['auth']=='Admin' else 'RouterBearer':[]}], 'x-router-route':route,
+            op = {'operationId':identifier,'summary':route['name'],'tags':[route['class'].split('(')[0]], 'security':route_security[route['auth']], 'x-router-route':route,
                 'responses':{'200':{'description':'Success','content':content},'default':{'description':route['dialect']+' failure envelope','content':{'application/json':{'schema':ref(route['dialect']+'Error')}}}},
                 'parameters':[{'name':parameter,'in':'path','required':True,'schema':STRING, 'description':'Wildcard path segments' if '{*'+parameter+'}' in route['path'] else 'Path parameter'} for parameter in re.findall(r'{([^}]+)}',path)]}
-            if method in ['POST','PUT','PATCH']:
+            if route['auth'] == 'ConfigWrite':
+                if method == 'PATCH':
+                    op['requestBody'] = {'required': True, 'content': {
+                        'application/merge-patch+json': {'schema': config_document},
+                        'application/json': {'schema': config_document},
+                    }}
+                elif method == 'PUT':
+                    schema = config_document if route['name'] == 'RuntimeConfig' else {}
+                    op['requestBody'] = {'required': True, 'content': {'application/json': {'schema': schema}}}
+            elif method in ['POST','PUT','PATCH']:
                 op['requestBody']={'required':route['name']=='Logging','content':{'application/json':{'schema':ref(request_types.get(route['name'],'OpaqueVendorPayload'))}}}
             if '/realtime' in path or path.endswith('/responses') and method=='GET': op['x-router-websocket']={'upgrade':'websocket','events':ref('OpaqueVendorPayload')}
-            if route['auth']=='Client': op['security'] += [{'RouterApiKey':[]},{'RouterGoogleKey':[]}]
             if method=='HEAD':
                 for response in op['responses'].values(): response.pop('content', None)
             paths.setdefault(path,{})[method.lower()] = op
@@ -220,7 +250,7 @@ def generate(catalog):
     paths['/']['head'] = copy.deepcopy(paths['/']['get'])
     paths['/']['head']['operationId'] = 'head_admin_ui'
     paths['/']['head']['responses']['200'].pop('content')
-    spec = {'openapi':'3.1.0','jsonSchemaDialect':DRAFT,'info':{'title':'Link.Assistant.Router HTTP API','version':catalog['version']},'servers':[{'url':'http://127.0.0.1:8080'}], 'paths':paths,'components':{'schemas':components,'securitySchemes':{'RouterBearer':{'type':'http','scheme':'bearer','bearerFormat':'la_sk JWT'},'AdminBearer':{'type':'http','scheme':'bearer','description':'Admin scoped JWT or provisioned TOKEN_ADMIN_KEY'},'RouterApiKey':{'type':'apiKey','in':'header','name':'x-api-key'},'RouterGoogleKey':{'type':'apiKey','in':'header','name':'x-goog-api-key'}}}, 'x-router-streams':{'sse':{'framing':'UTF-8 event/data records separated by a blank line','events':['message_start','content_block_start','content_block_delta','content_block_stop','message_delta','message_stop','error','response.created','response.output_text.delta','response.completed','response.failed','[DONE]']},'websocket':{'framing':'JSON text frames; native vendor event payloads','upgradeStatus':101}}}
+    spec = {'openapi':'3.1.0','jsonSchemaDialect':DRAFT,'info':{'title':'Link.Assistant.Router HTTP API','version':catalog['version']},'servers':[{'url':'http://127.0.0.1:8080'}], 'paths':paths,'components':{'schemas':components,'securitySchemes':{'RouterBearer':{'type':'http','scheme':'bearer','bearerFormat':'la_sk JWT'},'AdminBearer':{'type':'http','scheme':'bearer','description':'Admin scoped JWT or provisioned TOKEN_ADMIN_KEY'},'ConfigWriteBearer':{'type':'http','scheme':'bearer','description':'Router JWT with config:write scope'},'RouterApiKey':{'type':'apiKey','in':'header','name':'x-api-key'},'RouterGoogleKey':{'type':'apiKey','in':'header','name':'x-goog-api-key'}}}, 'x-router-streams':{'sse':{'framing':'UTF-8 event/data records separated by a blank line','events':['message_start','content_block_start','content_block_delta','content_block_stop','message_delta','message_stop','error','response.created','response.output_text.delta','response.completed','response.failed','[DONE]']},'websocket':{'framing':'JSON text frames; native vendor event payloads','upgradeStatus':101}}}
     spec['x-router-any-methods'] = any_methods
     write('openapi/router.yaml',spec)
     embedded = ['//! Generated offline contracts; regenerate with scripts/generate-contracts.py.', '#[rustfmt::skip]', 'pub(super) const CLI_SCHEMAS: &[(&str, &str)] = &[']

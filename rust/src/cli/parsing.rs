@@ -1,5 +1,11 @@
 //! Shared fallible argument parser.
+use std::ffi::OsString;
+use std::sync::Arc;
+
+use clap::FromArgMatches as _;
+
 use super::{Cli, Command};
+use crate::runtime_config::RuntimeConfig;
 
 /// Parse the CLI, hiding options that cannot affect the subcommand shown.
 ///
@@ -14,15 +20,32 @@ use super::{Cli, Command};
 ///
 /// Only the *help* changes. A global still parses wherever it always did, so
 /// no existing invocation breaks.
-pub fn try_parse_arguments(arguments: Vec<std::ffi::OsString>) -> Result<Cli, clap::Error> {
-    use clap::FromArgMatches as _;
+pub fn try_parse_arguments(arguments: Vec<OsString>) -> Result<Cli, clap::Error> {
+    let matches = argument_command(&arguments).try_get_matches_from(arguments)?;
+    cli_from_matches(&matches)
+}
 
+pub fn try_parse_invocation(
+    arguments: Vec<OsString>,
+) -> Result<(Cli, Option<Arc<RuntimeConfig>>), clap::Error> {
+    let command = argument_command(&arguments);
+    let matches = command.clone().try_get_matches_from(&arguments)?;
+    let cli = cli_from_matches(&matches)?;
+    if matches!(cli.command, None | Some(Command::Serve)) {
+        return RuntimeConfig::load(cli, command, arguments, &matches)
+            .map(|(cli, config)| (cli, Some(config)))
+            .map_err(|error| clap::Error::raw(clap::error::ErrorKind::ValueValidation, error));
+    }
+    Ok((cli, None))
+}
+
+fn argument_command(arguments: &[OsString]) -> clap::Command {
     let mut command = crate::contracts::command();
     // Globals are declared on the root and propagated into every subcommand
     // when the parser is built, so they can only be hidden before that — and
     // only for the invocations they cannot affect. `router tokens list --help`
     // still lists them, because there they work.
-    if names_a_client_launcher(&arguments) {
+    if names_a_client_launcher(arguments) {
         command = command.mut_args(|argument| {
             if argument.is_global_set()
                 && !matches!(argument.get_id().as_str(), "verbose" | "data_dir")
@@ -47,9 +70,11 @@ pub fn try_parse_arguments(arguments: Vec<std::ffi::OsString>) -> Result<Cli, cl
             || "router".to_string(),
             |name| name.to_string_lossy().into_owned(),
         );
-    command = substitute_usage_name(command, &invoked);
-    let matches = command.try_get_matches_from(arguments)?;
-    let mut cli = Cli::from_arg_matches(&matches)?;
+    substitute_usage_name(command, &invoked)
+}
+
+fn cli_from_matches(matches: &clap::ArgMatches) -> Result<Cli, clap::Error> {
+    let mut cli = Cli::from_arg_matches(matches)?;
     // A propagated global default is not a deploy override of --config (#688).
     if let Some(Command::Deploy(deploy)) = &mut cli.command
         && matches

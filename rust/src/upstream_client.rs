@@ -189,6 +189,8 @@ pub enum UpstreamSendError {
     /// The pooled account's client could not be built, typically because its
     /// egress proxy secret is missing (issue #678). Nothing was sent.
     Egress(String),
+    /// Final payload validation rejected the request before transmission.
+    PayloadRule(&'static str),
 }
 
 impl UpstreamSendError {
@@ -198,7 +200,7 @@ impl UpstreamSendError {
         match self {
             Self::Http(error) => error.is_timeout(),
             Self::FirstByteTimeout(_) => true,
-            Self::Egress(_) => false,
+            Self::Egress(_) | Self::PayloadRule(_) => false,
         }
     }
 }
@@ -213,6 +215,7 @@ impl std::fmt::Display for UpstreamSendError {
                 limit.as_secs()
             ),
             Self::Egress(error) => error.fmt(f),
+            Self::PayloadRule(error) => error.fmt(f),
         }
     }
 }

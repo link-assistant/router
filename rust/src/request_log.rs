@@ -19,11 +19,11 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
+mod upstream;
+
 use axum::body::Body;
 use axum::extract::{Request, State};
-use axum::http::HeaderMap;
-#[cfg(test)]
-use axum::http::HeaderValue;
+use axum::http::{HeaderMap, HeaderValue};
 use axum::middleware::Next;
 use axum::response::Response;
 use futures_util::StreamExt as _;
@@ -33,9 +33,9 @@ use sha2::{Digest as _, Sha256};
 use crate::app_state::AppState;
 use owner_only::{append_owner_only, ensure_owner_only_dir, write_owner_only};
 pub use redaction::BINARY_BODY_KEY;
-pub(crate) use redaction::is_secret_name;
 #[cfg(test)]
 use redaction::partially_redact;
+pub(crate) use redaction::{is_jwt, is_secret_name};
 use redaction::{redact_value, redacted_uri};
 pub use redaction::{redacted_body, redacted_headers};
 
@@ -110,6 +110,7 @@ pub struct RequestLog {
     total_limit_state: Mutex<Option<total_limit::State>>,
     routes: Mutex<HashMap<String, LogRoute>>,
     error_log: Option<Arc<crate::error_log::ErrorLog>>,
+    runtime_config: std::sync::OnceLock<Arc<crate::runtime_config::RuntimeConfig>>,
 }
 
 impl RequestLog {
@@ -158,6 +159,7 @@ impl RequestLog {
             total_limit_state: Mutex::new(None),
             routes: Mutex::new(HashMap::new()),
             error_log: None,
+            runtime_config: std::sync::OnceLock::new(),
         }
     }
 
@@ -176,6 +178,10 @@ impl RequestLog {
     /// Append one structured event, removing credentials before serialization.
     pub fn record(&self, correlation_id: &str, phase: &str, fields: Value) {
         let identity = self.identity(correlation_id);
+        self.record_for(correlation_id, phase, fields, &identity);
+    }
+
+    fn record_for(&self, correlation_id: &str, phase: &str, fields: Value, identity: &LogIdentity) {
         let mut event = Map::new();
         event.insert(
             "time".into(),
@@ -411,81 +417,6 @@ impl RequestLog {
         }
     }
 
-    /// Send a prepared upstream request while recording the exact request and
-    /// the response metadata under the client request's correlation id.
-    pub async fn send_upstream(
-        &self,
-        correlation_id: &str,
-        client: &reqwest::Client,
-        builder: reqwest::RequestBuilder,
-    ) -> Result<reqwest::Response, crate::upstream_client::UpstreamSendError> {
-        if let Some(account) = crate::account_policy_scope::account() {
-            self.set_account(correlation_id, &account);
-        }
-        let request = builder.build()?;
-        if crate::account_policy_scope::active() {
-            // Keep the policy loop's state out of every protocol handler's future.
-            return Box::pin(crate::account_policy_dispatch::send(
-                self,
-                correlation_id,
-                client,
-                request,
-            ))
-            .await;
-        }
-        self.send_prepared(correlation_id, client, request).await
-    }
-
-    /// Send and log one prepared attempt without nesting the policy retry loop.
-    pub(crate) async fn send_prepared(
-        &self,
-        correlation_id: &str,
-        client: &reqwest::Client,
-        request: reqwest::Request,
-    ) -> Result<reqwest::Response, crate::upstream_client::UpstreamSendError> {
-        self.begin_upstream(correlation_id);
-        self.record(
-            correlation_id,
-            "upstream_request",
-            json!({
-                "method": request.method().as_str(),
-                "uri": request.url().as_str(),
-                "headers": redacted_headers(request.headers()),
-                "body": request.body().and_then(reqwest::Body::as_bytes).map(redacted_body),
-            }),
-        );
-        let started = Instant::now();
-        let result = crate::upstream_client::execute_with_first_byte_timeout(
-            client,
-            request,
-            crate::upstream_client::upstream_first_byte_timeout(),
-        )
-        .await;
-        match &result {
-            Ok(response) => self.record(
-                correlation_id,
-                "upstream_response",
-                json!({
-                    "status": response.status().as_u16(),
-                    "headers": redacted_headers(response.headers()),
-                    "latency_ms": started.elapsed().as_millis(),
-                }),
-            ),
-            Err(error) => self.record(
-                correlation_id,
-                "upstream_error",
-                json!({
-                    "error": error.to_string(),
-                    "latency_ms": started.elapsed().as_millis(),
-                }),
-            ),
-        }
-        result.map(|response| match &self.error_log {
-            Some(log) => log.wrap(correlation_id, response),
-            None => response,
-        })
-    }
-
     /// Record bytes received from the upstream (one event per stream chunk).
     pub fn record_upstream_body(&self, correlation_id: &str, body: &[u8]) {
         self.record(
@@ -674,14 +605,21 @@ fn eagerly_capture_json(headers: &HeaderMap) -> bool {
     json && bounded_length
 }
 
-/// Return the public route template for byte-transparent native services.
+/// Return the public template for routes that use opaque logging.
 ///
 /// Their provider-owned payloads can contain uploads, workspace data, account
 /// state, and future fields Router cannot safely classify. Templates also
 /// remove resource IDs, while exact contract matching prevents a lookalike or
 /// wrong-method route from silently receiving this stronger policy.
-fn opaque_native_route(method: &axum::http::Method, path: &str) -> Option<&'static str> {
+fn opaque_route(method: &axum::http::Method, path: &str) -> Option<&'static str> {
     let route = crate::route_contract::route_for_path(method, path)?;
+    if matches!(
+        route.auth,
+        crate::route_contract::RouteAuth::ConfigRead
+            | crate::route_contract::RouteAuth::ConfigWrite
+    ) {
+        return Some(route.template);
+    }
     matches!(
         route.id,
         crate::route_contract::RouteId::NativeOpenAi
@@ -701,12 +639,11 @@ fn upstream_request_id(headers: &HeaderMap) -> Option<&str> {
 
 /// URI safe for process diagnostics and HTTP tracing.
 ///
-/// Native vendor routes are reduced to their static route template; ordinary
-/// routes retain their path and generically redacted query.
+/// Native vendor and runtime configuration routes are reduced to their static
+/// template. Other routes retain their path and generically redacted query.
 #[must_use]
 pub fn safe_http_uri(method: &axum::http::Method, uri: &axum::http::Uri) -> String {
-    opaque_native_route(method, uri.path())
-        .map_or_else(|| redacted_uri(&uri.to_string()), str::to_string)
+    opaque_route(method, uri.path()).map_or_else(|| redacted_uri(&uri.to_string()), str::to_string)
 }
 
 impl Drop for ClientRequestCapture {
@@ -724,6 +661,13 @@ impl Drop for RequestRouteGuard {
     fn drop(&mut self) {
         self.logger.finish_request(&self.correlation_id);
     }
+}
+
+fn set_response_id(response: &mut Response, id: &str) {
+    response.headers_mut().insert(
+        "x-router-request-id",
+        HeaderValue::from_str(id).expect("UUID is a valid header"),
+    );
 }
 
 /// Middleware that records every client-side HTTP exchange by default.
@@ -763,7 +707,7 @@ pub async fn log_http_exchange(
         logger: Arc::clone(&state.request_log),
         correlation_id: correlation_id.clone(),
     };
-    if let Some(route) = opaque_native_route(&parts.method, parts.uri.path()) {
+    if let Some(route) = opaque_route(&parts.method, parts.uri.path()) {
         parts
             .extensions
             .insert(RequestCorrelationId(correlation_id.clone()));
@@ -774,12 +718,13 @@ pub async fn log_http_exchange(
             "client_request",
             json!({"method": method.as_str(), "uri": route}),
         );
-        let response = ACTIVE_CORRELATION_ID
+        let mut response = ACTIVE_CORRELATION_ID
             .scope(
                 correlation_id.clone(),
                 next.run(Request::from_parts(parts, body)),
             )
             .await;
+        set_response_id(&mut response, &correlation_id);
         let upstream_request_id = upstream_request_id(response.headers());
         tracing::info!(
             request_id = %correlation_id,
@@ -871,7 +816,7 @@ pub async fn log_http_exchange(
         .extensions
         .get::<RequestCorrelationId>()
         .map_or_else(|| correlation_id.clone(), |value| value.0.clone());
-    let response = ACTIVE_CORRELATION_ID
+    let mut response = ACTIVE_CORRELATION_ID
         .scope(routed_correlation_id, async move {
             match early_response {
                 Some(response) => response,
@@ -879,6 +824,7 @@ pub async fn log_http_exchange(
             }
         })
         .await;
+    set_response_id(&mut response, &correlation_id);
     // Written after the handler has run, because that is when the body has
     // streamed through the capture above and the model is known. Emitting it
     // on arrival is what left the field unfillable: the middleware sits

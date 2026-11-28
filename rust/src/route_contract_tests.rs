@@ -49,6 +49,15 @@ fn every_registered_route_has_one_canonical_class_and_listener_contract() {
                     RouteId::AdminStatus | RouteId::AdminBootstrap | RouteId::AdminBootstrapConfirm
                 ) {
                     assert_eq!(spec.auth, RouteAuth::None);
+                } else if spec.template.starts_with("/api/management/config") {
+                    assert_eq!(
+                        spec.auth,
+                        if spec.method.as_str() == "GET" {
+                            RouteAuth::ConfigRead
+                        } else {
+                            RouteAuth::ConfigWrite
+                        }
+                    );
                 } else {
                     assert_eq!(spec.auth, RouteAuth::Admin);
                 }

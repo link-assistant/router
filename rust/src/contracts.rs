@@ -247,7 +247,7 @@ pub fn types() -> crate::translation_core::Json {
     })
 }
 
-fn secret_option(name: &crate::translation_core::Str) -> bool {
+pub(crate) fn secret_option(name: &crate::translation_core::Str) -> bool {
     name.ends_with("_api_key")
         || name.ends_with("_private_key")
         || name.ends_with("_bot_token")

@@ -18,6 +18,7 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
+use crate::runtime_config::RuntimeConfig;
 use crate::{auth_cli, bin_doctor, deploy_cli, logs_cli, recover_admin_cli, shutdown};
 
 use axum::middleware::from_fn_with_state;
@@ -43,6 +44,13 @@ pub use crate::process_adapter::run_from_environment;
 
 /// Execute a parsed request without spawning the Router binary.
 pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
+    Box::pin(dispatch_invocation(cli, None)).await
+}
+
+pub(crate) async fn dispatch_invocation(
+    cli: crate::cli::Cli,
+    document: Option<Arc<RuntimeConfig>>,
+) -> ExitCode {
     // The wrapper and managed-server commands do not start a router and must
     // not require server-only configuration or pollute client stdout with
     // router startup logs.
@@ -83,9 +91,6 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
     }
 
     let verbose = cli.verbose;
-    let request_log = cli.request_log.clone();
-    let request_log_max_bytes = cli.request_log_max_bytes;
-    let request_log_max_total_bytes = cli.request_log_max_total_bytes;
 
     let logger = link_assistant_router::logging::build_lazy(verbose);
 
@@ -131,15 +136,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
     }
 
     match cli.command.as_ref() {
-        None | Some(Command::Serve) => match run_server(
-            config,
-            logger,
-            request_log.as_deref(),
-            request_log_max_bytes,
-            request_log_max_total_bytes,
-        )
-        .await
-        {
+        None | Some(Command::Serve) => match run_server(config, &cli, logger, document).await {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
                 // Startup failures must reach the terminal even when normal
@@ -193,7 +190,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
         Some(Command::Deploy(args)) => deploy_cli::run(&config, args),
         Some(Command::Doctor { .. }) => bin_doctor::run_doctor(&config).await,
         Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
-        Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
+        Some(Command::Logs { op }) => logs_cli::run(&config, cli.request_log.as_deref(), op),
     }
 }
 
@@ -279,10 +276,9 @@ fn announce_admin_access(config: &Config, token_manager: &TokenManager) {
 
 async fn run_server(
     config: Config,
+    cli: &crate::cli::Cli,
     logger: LogLazy,
-    request_log: Option<&std::path::Path>,
-    request_log_max_bytes: u64,
-    request_log_max_total_bytes: u64,
+    runtime_config: Option<Arc<RuntimeConfig>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     link_assistant_router::management_config::ManagementConfig::validate_secrets(
         &config.token_secret,
@@ -426,9 +422,9 @@ async fn run_server(
         )),
         request_log: link_assistant_router::logging::request_log(
             &config.data_dir,
-            request_log,
-            request_log_max_bytes,
-            request_log_max_total_bytes,
+            cli.request_log.as_deref(),
+            cli.request_log_max_bytes,
+            cli.request_log_max_total_bytes,
         ),
         crater: crater_provider,
         openai_compatible: config.openai_compatible.clone(),
@@ -487,6 +483,10 @@ async fn run_server(
         .collect::<Vec<_>>();
     if let Some(router) = state.account_router.as_ref() {
         catalog_readers.extend(router.subscription_readers());
+    }
+    if let Some(document) = runtime_config {
+        document.watch();
+        state.request_log.install_runtime_config(document);
     }
     let (catalog_refresh, source_refresh) = tokio::join!(
         link_assistant_router::model_catalog::refresh_catalogs_from_startup(

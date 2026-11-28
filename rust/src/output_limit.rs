@@ -16,6 +16,8 @@
 //! tokens are not observable at all. The cap is therefore a best-effort output
 //! bound, not an exact accounting of billed tokens.
 
+use std::fmt::Write as _;
+
 use serde_json::{Value, json};
 
 /// Characters per token used by the router's local estimator.
@@ -91,6 +93,10 @@ pub fn truncate(
 
 /// Enforce an output cap on a buffered Responses payload.
 pub fn enforce_response_limit(response: &mut Value, limit: u64) {
+    limit_response(response, limit);
+}
+
+fn limit_response(response: &mut Value, limit: u64) -> bool {
     let mut limiter = OutputTokenLimiter::new(Some(limit));
     let mut truncated = false;
     if let Some(items) = response.get_mut("output").and_then(Value::as_array_mut) {
@@ -115,6 +121,7 @@ pub fn enforce_response_limit(response: &mut Value, limit: u64) {
         response["incomplete_details"] =
             crate::translation_core::json!({"reason": "max_output_tokens"});
     }
+    truncated
 }
 
 /// Enforce an output cap on a buffered Chat Completions payload.
@@ -139,6 +146,82 @@ pub fn enforce_chat_limit(response: &mut Value, limit: u64) {
     }
 }
 
+pub(crate) enum ResponsesFrame {
+    Forward,
+    Omit,
+    Rewrite,
+    Exhausted { delta: bool, incomplete: Value },
+}
+
+/// Keep the same visible-text budget for SSE and WebSocket Responses relays.
+pub(crate) struct ResponsesEventLimit {
+    limit: Option<u64>,
+    limiter: OutputTokenLimiter,
+    last_response: Option<Value>,
+}
+
+impl ResponsesEventLimit {
+    pub(crate) const fn new(limit: Option<u64>) -> Self {
+        Self {
+            limit,
+            limiter: OutputTokenLimiter::new(limit),
+            last_response: None,
+        }
+    }
+
+    const fn enabled(&self) -> bool {
+        self.limit.is_some()
+    }
+
+    pub(crate) fn apply(&mut self, event: &mut Value) -> ResponsesFrame {
+        let Some(limit) = self.limit else {
+            return ResponsesFrame::Forward;
+        };
+        if self.limiter.stopped() {
+            return ResponsesFrame::Omit;
+        }
+        let kind = event.get("type").and_then(Value::as_str).unwrap_or("");
+        if kind == "response.created" {
+            self.last_response = event
+                .get("response")
+                .filter(|value| value.is_object())
+                .cloned();
+        }
+        if matches!(kind, "response.completed" | "response.incomplete") {
+            if let Some(response) = event.get_mut("response")
+                && limit_response(response, limit)
+            {
+                event["type"] = Value::String("response.incomplete".into());
+                return ResponsesFrame::Rewrite;
+            }
+            return ResponsesFrame::Forward;
+        }
+        if kind != "response.output_text.delta" {
+            return ResponsesFrame::Forward;
+        }
+        let Some(text) = event.get("delta").and_then(Value::as_str) else {
+            return ResponsesFrame::Forward;
+        };
+        let (visible, hit) = self.limiter.push(text);
+        if !hit {
+            return ResponsesFrame::Forward;
+        }
+        let delta = !visible.is_empty();
+        event["delta"] = Value::String(visible);
+        let mut response = self
+            .last_response
+            .take()
+            .unwrap_or_else(|| json!({"id": "", "object": "response", "model": ""}));
+        response["status"] = Value::String("incomplete".into());
+        response["incomplete_details"] = json!({"reason": "max_output_tokens"});
+        let mut incomplete = json!({"type": "response.incomplete", "response": response});
+        if let Some(lane) = event.get("stream_id") {
+            incomplete["stream_id"] = lane.clone();
+        }
+        ResponsesFrame::Exhausted { delta, incomplete }
+    }
+}
+
 /// Rewrite a relayed Codex Responses SSE stream.
 ///
 /// The native `/v1/responses` surface is otherwise a byte-for-byte relay, which
@@ -147,10 +230,9 @@ pub fn enforce_chat_limit(response: &mut Value, limit: u64) {
 /// the cap is exhausted.
 pub struct ResponsesStreamRewriter {
     requested_model: String,
-    limiter: OutputTokenLimiter,
+    limiter: ResponsesEventLimit,
     buffer: Vec<u8>,
     finished: bool,
-    last_response: Option<Value>,
     upstream_model: Option<String>,
     strict_identity: bool,
     allow_substitution: bool,
@@ -166,10 +248,9 @@ impl ResponsesStreamRewriter {
     ) -> Self {
         Self {
             requested_model: requested_model.to_string(),
-            limiter: OutputTokenLimiter::new(limit),
+            limiter: ResponsesEventLimit::new(limit),
             buffer: Vec::new(),
             finished: false,
-            last_response: None,
             upstream_model: None,
             strict_identity: false,
             allow_substitution: false,
@@ -286,7 +367,6 @@ impl ResponsesStreamRewriter {
         let Ok(mut event) = serde_json::from_str::<Value>(&payload) else {
             return format!("{block}\n\n");
         };
-        let original = event.clone();
         if let Some(served) = crate::model_contract::served_model_from(&event) {
             if let Some(first) = self.upstream_model.as_deref()
                 && first != served
@@ -338,47 +418,24 @@ impl ResponsesStreamRewriter {
             }
             self.finished = true;
         }
-        if event.get("type").and_then(Value::as_str) == Some("response.created")
-            && let Some(response) = event.get("response")
-        {
-            self.last_response = Some(response.clone());
-        }
-        if event.get("type").and_then(Value::as_str) != Some("response.output_text.delta")
-            || !self.limiter.enabled()
-        {
-            if event == original {
-                return format!("{block}\n\n");
+        match self.limiter.apply(&mut event) {
+            ResponsesFrame::Forward => format!("{block}\n\n"),
+            ResponsesFrame::Omit => String::new(),
+            ResponsesFrame::Rewrite => format!("event: response.incomplete\ndata: {event}\n\n"),
+            ResponsesFrame::Exhausted { delta, incomplete } => {
+                self.finished = true;
+                let mut out = if delta {
+                    render_block(block, &event)
+                } else {
+                    String::new()
+                };
+                let _ = write!(
+                    out,
+                    "event: response.incomplete\ndata: {incomplete}\n\ndata: [DONE]\n\n"
+                );
+                out
             }
-            return render_block(block, &event);
         }
-        let delta = event
-            .get("delta")
-            .and_then(Value::as_str)
-            .unwrap_or_default()
-            .to_string();
-        let (visible, hit) = self.limiter.push(&delta);
-        event["delta"] = Value::String(visible.clone());
-        let mut out = String::new();
-        if !visible.is_empty() {
-            out.push_str(&render_block(block, &event));
-        }
-        if hit {
-            self.finished = true;
-            out.push_str(&self.incomplete_block());
-            out.push_str("data: [DONE]\n\n");
-        }
-        out
-    }
-
-    fn incomplete_block(&self) -> String {
-        let mut response = self
-            .last_response
-            .clone()
-            .unwrap_or_else(|| json!({"id": "", "object": "response", "model": ""}));
-        response["status"] = Value::String("incomplete".into());
-        response["incomplete_details"] = json!({"reason": "max_output_tokens"});
-        let event = json!({"type": "response.incomplete", "response": response});
-        format!("event: response.incomplete\ndata: {event}\n\n")
     }
 
     fn identity_error_block(error: &crate::model_contract::ServedModelError) -> String {
@@ -434,7 +491,6 @@ fn render_block(
     block: &crate::translation_core::Str,
     event: &crate::translation_core::Json,
 ) -> String {
-    use std::fmt::Write as _;
     let mut rendered = String::new();
     for line in block.lines() {
         let line = line.trim_end_matches('\r');

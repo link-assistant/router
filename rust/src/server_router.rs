@@ -63,8 +63,16 @@ pub fn router_for_listener(state: AppState, config: &Config, listener: ListenerK
             crate::management_middleware::gate,
         ));
     }
-    app.layer(axum::middleware::from_fn(scope_auth_outcomes))
-        .with_state(state)
+    app.layer(from_fn_with_state(
+        state.clone(),
+        crate::runtime_config::cors::middleware,
+    ))
+    .layer(from_fn_with_state(
+        state.clone(),
+        crate::runtime_config::egress::scope,
+    ))
+    .layer(axum::middleware::from_fn(scope_auth_outcomes))
+    .with_state(state)
 }
 
 /// Count each request's authentication outcome once, however many handlers
@@ -98,7 +106,7 @@ pub(crate) fn management_routes(
             route_template(RouteId::AdminBootstrapConfirm),
             post(crate::admin_api::bootstrap_confirm),
         );
-    let mut routes = Router::new()
+    let mut routes = crate::runtime_config::api::routes()
         .route(
             route_template(RouteId::ModelDefinitions),
             get(crate::model_catalog_sources::model_definitions),

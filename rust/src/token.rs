@@ -50,6 +50,9 @@ pub(crate) fn token_jwt(token: &str) -> Option<&str> {
 /// inference proxy. Tokens issued without a scope may only proxy inference.
 pub const ADMIN_SCOPE: &str = "admin";
 
+/// Permission to read and edit the runtime configuration document.
+pub const CONFIG_WRITE_SCOPE: &str = "config:write";
+
 /// JWT claims stored inside each custom token.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TokenClaims {
@@ -203,9 +206,9 @@ impl IssueRequest<'_> {
         if self.rate_limit_per_minute == Some(0) {
             return Err("rate_limit_per_minute must be greater than zero.".to_string());
         }
-        if !self.scope.is_empty() && self.scope != ADMIN_SCOPE {
+        if !matches!(self.scope, "" | ADMIN_SCOPE | CONFIG_WRITE_SCOPE) {
             return Err(format!(
-                "scope must be empty (client) or \"{ADMIN_SCOPE}\"."
+                "scope must be empty (client), \"{ADMIN_SCOPE}\", or \"{CONFIG_WRITE_SCOPE}\"."
             ));
         }
         match (self.client_kind, self.principal_id) {

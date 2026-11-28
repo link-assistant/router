@@ -226,8 +226,8 @@
     {
       "source": "schemas/operation-catalog.v1.json",
       "target": "rust/schemas/operation-catalog.v1.json",
-      "bytes": 1966222,
-      "sha256": "f35e7cf5a28895ed5fa3a79dfc65694570b0ae37da4c772a4bde00adba324090"
+      "bytes": 1968925,
+      "sha256": "eb7ac47c52fddea8dda1c51b6b8a280a9ebcaa020a0619bfd9badd5f056d8162"
     },
     {
       "source": "schemas/preservation.v1.json",
@@ -430,8 +430,8 @@
     {
       "source": "openapi/router.yaml",
       "target": "rust/openapi/router.yaml",
-      "bytes": 722229,
-      "sha256": "b78bef53c8383657f72c5da88694e2848227da327ced9815091b77dd5da6c6cc"
+      "bytes": 747318,
+      "sha256": "f86d1f82f68a35bfd60acec0d37e8e8db127b28ade10b79daa89b195aabd86a2"
     },
     {
       "source": "ui/dist/assets/app.js",
@@ -470,6 +470,6 @@
       "sha256": "de89757aa04d2dabb248a08079e7cd70b979becc9e8eda39d2dff5717b481a97"
     }
   ],
-  "bytes": 3506572,
+  "bytes": 3534364,
   "semanticAuthority": false
 }
