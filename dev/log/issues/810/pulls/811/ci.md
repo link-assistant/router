@@ -241,6 +241,10 @@ All three platform jobs passed their existing suites. Ubuntu and macOS each pass
 
 The complete release workflow passed. The locked optimized build finished in 7 minutes and 32 seconds at archive line 1821. The locked package inventory command began at line 1822 and passed. [Package job](https://github.com/link-assistant/router/actions/runs/46087185749/job/140814119139).
 
+### Router 1.25.7 release ancestry
+
+The default-branch release workflow advanced `main` to `d7c8b0f9c86b220756097516badcf3f0a401b070` while checkpoint `464add84` was testing the repaired base `efb1bb89`. The subsequent integration retains the released 1.25.7 versions and catalogs, leaves the dependency-update changelog fragment in place, and synchronizes the editable Python package and the local Rust package in the fuzz lock to the released version. The other dependency records in both locks are byte-for-byte the same. The uv lock check, Rust asset mirror check and manual workflow policy auditor passed. [Automated release commit](https://github.com/link-assistant/router/commit/d7c8b0f9c86b220756097516badcf3f0a401b070), [release workflow](https://github.com/link-assistant/router/actions/runs/46087246030).
+
 ## Cargo tool advisories
 
 The published archives for seven Cargo tools were downloaded from crates.io and matched to the registry SHA-256. OSV scanned the bundled locks before any changes. Each original installed version, latest registry version, upstream dependency constraint and advisory identifier is in the inventory. Advisory counts can include aliases and optional or development dependencies. [Published inventory A](cargo-tools-published-a.tsv), [published inventory B](cargo-tools-published-b.tsv).

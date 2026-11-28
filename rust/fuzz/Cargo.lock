@@ -1860,7 +1860,7 @@ dependencies = [
 
 [[package]]
 name = "link-assistant-router"
-version = "1.25.6"
+version = "1.25.7"
 dependencies = [
  "aes-gcm",
  "async-trait",
