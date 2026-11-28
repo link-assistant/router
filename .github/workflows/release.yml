@@ -284,17 +284,19 @@ jobs:
         with:
           node-version: '26.13.1'
           cache: npm
-          cache-dependency-path: ui/package-lock.json
+          cache-dependency-path: |
+            ui/package-lock.json
+            experiments/issue-781/package-lock.json
       - run: npm install --global npm@12.2.3 --ignore-scripts
         if: ${{ !cancelled() && steps.privacy-node.outcome == 'success' }}
 
       - name: Test the published sensitive data sanitizer integration
         if: ${{ !cancelled() && steps.privacy-node.outcome == 'success' }}
         timeout-minutes: 5
+        env:
+          ROUTER_SANITIZER_TEST_PREFIX: ${{ github.workspace }}/experiments/issue-781
         run: |
-          export ROUTER_SANITIZER_TEST_PREFIX="$(mktemp -d)"
-          trap 'rm -rf -- "$ROUTER_SANITIZER_TEST_PREFIX"' EXIT
-          npm install --prefix "$ROUTER_SANITIZER_TEST_PREFIX" --save-exact --ignore-scripts @link-foundation/sensitive-data-sanitizer@0.23.0
+          npm ci --prefix "$ROUTER_SANITIZER_TEST_PREFIX" --ignore-scripts
           node --test experiments/issue-781/published-sanitizer.test.mjs
 
       - name: Install admin console dependencies
@@ -442,7 +444,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           status=0
-          for project in js ts scripts/ci; do
+          for project in js ts scripts/ci experiments/issue-781; do
             npm audit --prefix "$project" || status=1
           done
           exit "$status"

@@ -14,6 +14,7 @@ updates:
       - /ts
       - /ui
       - /scripts/ci
+      - /experiments/issue-781
     schedule:
       interval: weekly
     groups:

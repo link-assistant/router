@@ -116,3 +116,35 @@ ui	react-is	16.13.1	19.3.1	hoist-non-react-statics@3.3.2 (^16.7.0)	Published sem
 ui	resolve-from	4.0.0	5.0.0	import-fresh@3.3.1 (^4.0.0)	Published semver range excludes the latest release: import-fresh@3.3.1 (^4.0.0).
 ui	source-map	0.5.7	0.8.0	@emotion/babel-plugin@11.13.5 (^0.5.7)	Published semver range excludes the latest release: @emotion/babel-plugin@11.13.5 (^0.5.7).
 ui	stylis	4.2.0	4.4.0	@emotion/babel-plugin@11.13.5 (4.2.0), @emotion/cache@11.14.0 (4.2.0)	Published semver range excludes the latest release: @emotion/babel-plugin@11.13.5 (4.2.0), @emotion/cache@11.14.0 (4.2.0).
+experiments/issue-781	@jridgewell/gen-mapping	0.4.0-beta.0	0.3.13	@babel/generator@8.1.4 (0.4.0-beta.0)	Published requirements exclude the latest release: @babel/generator@8.1.4 (0.4.0-beta.0).
+experiments/issue-781	@peggyjs/from-mem	3.1.3	4.0.0	peggy@5.1.0 (3.1.3)	Published requirements exclude the latest release: peggy@5.1.0 (3.1.3).
+experiments/issue-781	@sec-ant/readable-stream	0.4.1	0.7.1	get-stream@9.0.1 (^0.4.1)	Published requirements exclude the latest release: get-stream@9.0.1 (^0.4.1).
+experiments/issue-781	@secretlint/core	14.0.1	14.1.0	@link-foundation/sensitive-data-sanitizer@2.1.0 (14.0.1)	Published requirements exclude the latest release: @link-foundation/sensitive-data-sanitizer@2.1.0 (14.0.1).
+experiments/issue-781	@secretlint/profiler	14.0.1	14.1.0	@link-foundation/sensitive-data-sanitizer@2.1.0 (14.0.1), @secretlint/core@14.0.1 (14.0.1)	Published requirements exclude the latest release: @link-foundation/sensitive-data-sanitizer@2.1.0 (14.0.1), @secretlint/core@14.0.1 (14.0.1).
+experiments/issue-781	@secretlint/types	14.0.1	14.1.0	@secretlint/core@14.0.1 (14.0.1)	Published requirements exclude the latest release: @secretlint/core@14.0.1 (14.0.1).
+experiments/issue-781	@types/jsesc	2.5.1	3.0.3	@babel/generator@8.1.4 (^2.5.0)	Published requirements exclude the latest release: @babel/generator@8.1.4 (^2.5.0).
+experiments/issue-781	ansi-styles	6.2.3	7.0.0	wrap-ansi@9.0.2 (^6.2.1)	Published requirements exclude the latest release: wrap-ansi@9.0.2 (^6.2.1).
+experiments/issue-781	string-width	7.2.0	9.0.0	cliui@9.0.1 (^7.2.0)	Published requirements exclude the latest release: cliui@9.0.1 (^7.2.0).
+experiments/issue-781	commander	14.0.3	15.1.0	peggy@5.1.0 (^14.0.3)	Published requirements exclude the latest release: peggy@5.1.0 (^14.0.3).
+experiments/issue-781	emoji-regex	10.6.0	11.0.0	string-width@7.2.0 (^10.3.0), string-width@7.2.0 (^10.3.0)	Published requirements exclude the latest release: string-width@7.2.0 (^10.3.0), string-width@7.2.0 (^10.3.0).
+experiments/issue-781	isexe	2.0.0	4.0.0	which@2.0.2 (^2.0.0)	Published requirements exclude the latest release: which@2.0.2 (^2.0.0).
+experiments/issue-781	links-notation	0.31.8	0.32.0	@link-foundation/sensitive-data-sanitizer@2.1.0 (0.31.8), lino-arguments@0.4.1 (^0.31.2), lino-i18n@0.6.0 (^0.31.3), lino-objects-codec@0.9.6 (^0.31.3), lino-objects-codec@1.0.0 (^0.31.5)	Published requirements exclude the latest release: @link-foundation/sensitive-data-sanitizer@2.1.0 (0.31.8), lino-arguments@0.4.1 (^0.31.2), lino-i18n@0.6.0 (^0.31.3), lino-objects-codec@0.9.6 (^0.31.3), lino-objects-codec@1.0.0 (^0.31.5).
+experiments/issue-781	links-notation	0.11.2	0.32.0	lino-env@0.2.8 (^0.11.2)	Published requirements exclude the latest release: lino-env@0.2.8 (^0.11.2).
+experiments/issue-781	lino-i18n	0.6.0	0.6.1	@link-foundation/sensitive-data-sanitizer@2.1.0 (0.6.0)	Published requirements exclude the latest release: @link-foundation/sensitive-data-sanitizer@2.1.0 (0.6.0).
+experiments/issue-781	lino-objects-codec	0.9.6	1.2.0	lino-i18n@0.6.0 (^0.9.6)	Published requirements exclude the latest release: lino-i18n@0.6.0 (^0.9.6).
+experiments/issue-781	lino-objects-codec	1.0.0	1.2.0	@link-foundation/sensitive-data-sanitizer@2.1.0 (1.0.0)	Published requirements exclude the latest release: @link-foundation/sensitive-data-sanitizer@2.1.0 (1.0.0).
+experiments/issue-781	links-notation	0.13.0	0.32.0	meta-language@0.46.0 (0.13.0)	Published requirements exclude the latest release: meta-language@0.46.0 (0.13.0).
+experiments/issue-781	node-addon-api	7.1.1	8.9.2	node-pty@1.1.0 (^7.1.0)	Published requirements exclude the latest release: node-pty@1.1.0 (^7.1.0).
+experiments/issue-781	parse-ms	4.0.0	5.0.0	pretty-ms@9.3.1 (^4.0.0)	Published requirements exclude the latest release: pretty-ms@9.3.1 (^4.0.0).
+experiments/issue-781	path-key	3.1.1	4.0.0	cross-spawn@7.0.6 (^3.1.0)	Published requirements exclude the latest release: cross-spawn@7.0.6 (^3.1.0).
+experiments/issue-781	peggy	5.1.0	5.1.1	meta-language@0.46.0 (5.1.0)	Published requirements exclude the latest release: meta-language@0.46.0 (5.1.0).
+experiments/issue-781	pretty-ms	9.3.1	10.0.0	execa@10.2.1 (^9.3.1)	Published requirements exclude the latest release: execa@10.2.1 (^9.3.1).
+experiments/issue-781	semver	7.7.4	7.8.6	@peggyjs/from-mem@3.1.3 (7.7.4)	Published requirements exclude the latest release: @peggyjs/from-mem@3.1.3 (7.7.4).
+experiments/issue-781	shebang-regex	3.0.0	4.0.0	shebang-command@2.0.0 (^3.0.0)	Published requirements exclude the latest release: shebang-command@2.0.0 (^3.0.0).
+experiments/issue-781	source-map-generator	2.0.6	2.0.7	peggy@5.1.0 (2.0.6)	Published requirements exclude the latest release: peggy@5.1.0 (2.0.6).
+experiments/issue-781	string-width	8.3.0	9.0.0	yargs@18.2.0 (^8.2.1)	Published requirements exclude the latest release: yargs@18.2.0 (^8.2.1).
+experiments/issue-781	tar-stream	3.2.2	3.3.0	@link-foundation/sensitive-data-sanitizer@2.1.0 (3.2.2)	Published requirements exclude the latest release: @link-foundation/sensitive-data-sanitizer@2.1.0 (3.2.2).
+experiments/issue-781	unicorn-magic	0.3.0	0.4.1	npm-run-path@6.0.0 (^0.3.0)	Published requirements exclude the latest release: npm-run-path@6.0.0 (^0.3.0).
+experiments/issue-781	which	2.0.2	7.0.0	cross-spawn@7.0.6 (^2.0.1)	Published requirements exclude the latest release: cross-spawn@7.0.6 (^2.0.1).
+experiments/issue-781	wrap-ansi	9.0.2	10.0.2	cliui@9.0.1 (^9.0.0)	Published requirements exclude the latest release: cliui@9.0.1 (^9.0.0).
+experiments/issue-781	string-width	7.2.0	9.0.0	wrap-ansi@9.0.2 (^7.0.0)	Published requirements exclude the latest release: wrap-ansi@9.0.2 (^7.0.0).

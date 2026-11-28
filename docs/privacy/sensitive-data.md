@@ -14,15 +14,16 @@ causes Router to refuse the affected request before provider forwarding.
 
 ## Start a local scanner
 
-Run the adapter with Node.js 22.13 or newer. The Router process can continue to
+Run the adapter with Node.js 26.13.1 or newer. The Router process can continue to
 use its existing runtime. From a checkout of this repository, install the
-pinned detector into a separate directory:
+pinned detector and its locked dependencies into a separate directory.
 
 ```bash
 scanner_dir="$(mktemp -d)"
 chmod 700 "$scanner_dir"
 cp examples/sensitive-data-{scanner,detectors}.mjs "$scanner_dir/"
-npm install --prefix "$scanner_dir" --save-exact --ignore-scripts @link-foundation/sensitive-data-sanitizer@0.23.0
+cp experiments/issue-781/package{,-lock}.json "$scanner_dir/"
+npm ci --prefix "$scanner_dir" --ignore-scripts
 
 export ROUTER_SENSITIVE_DATA_SCANNER_TOKEN="$(openssl rand -hex 32)"
 node "$scanner_dir/sensitive-data-scanner.mjs" &
@@ -43,7 +44,7 @@ Protocol fields that Router controls, including request authentication and
 WebSocket negotiation, have their own forwarding policy. The detector policy
 can be supplied as a private JSON file via
 `ROUTER_SENSITIVE_DATA_SCANNER_POLICY`. For example, add known private names or
-configure per-type thresholds using the [pinned sanitizer API options](https://github.com/link-foundation/sensitive-data-sanitizer/blob/v0.23.0/docs/API.md).
+configure per-type thresholds using the [pinned sanitizer API options](https://github.com/link-foundation/sensitive-data-sanitizer/blob/v2.1.0/docs/API.md).
 
 ```json
 {
