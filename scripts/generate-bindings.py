@@ -123,6 +123,16 @@ def main():
     project=(ROOT/'packages/python/pyproject.toml').read_text();project=re.sub(r'(?m)^version = ".*"$',f'version = "{catalog["version"]}"',project)
     lock=json.loads((ROOT/'js/package-lock.json').read_text());lock['version']=catalog['version'];lock['packages']['']['version']=catalog['version']
     outputs={'js/index.d.ts':'\n'.join(declarations),'packages/python/link_assistant_router/__init__.pyi':'\n'.join(py),'js/package.json':json.dumps(package,indent=2)+'\n','js/package-lock.json':json.dumps(lock,indent=2)+'\n','packages/python/pyproject.toml':project}
+    python_lock_path = 'packages/python/uv.lock'
+    python_lock = (ROOT / python_lock_path).read_text()
+    python_lock, edits = re.subn(
+        r'(?m)^(\[\[package\]\]\nname = "link-assistant-router"\n)version = "[^"\n]+"$',
+        lambda match: f'{match[1]}version = "{catalog["version"]}"',
+        python_lock,
+    )
+    if edits != 1:
+        raise SystemExit('Expected exactly one Router package in packages/python/uv.lock')
+    outputs[python_lock_path] = python_lock
     stale=[]
     for path,content in outputs.items():
         target=ROOT/path

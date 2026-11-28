@@ -1,0 +1,77 @@
+name: Nix Packaging
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'flake.nix'
+      - 'flake.lock'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust/**'
+      - 'tools/translation/**/*.rs'
+      - '.github/workflows/nix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nix-package-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-manual-development.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
+  package:
+    if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
+    needs: [javascript]
+    name: Check Nix package (${{ matrix.system }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: x86_64-linux
+            runner: ubuntu-24.04
+          - system: aarch64-linux
+            runner: ubuntu-24.04-arm
+          - system: x86_64-darwin
+            runner: macos-15-intel
+          - system: aarch64-darwin
+            runner: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: cachix/install-nix-action@382a9ed9481c7c1f94f68b72ef105b3417c73877 # v32.1.0
+        if: matrix.system != 'x86_64-darwin'
+        with:
+          enable_kvm: false
+          set_as_trusted_user: false
+      - uses: cachix/install-nix-action@382a9ed9481c7c1f94f68b72ef105b3417c73877 # v32.1.0
+        if: matrix.system == 'x86_64-darwin'
+        with:
+          # Nix 2.36 no longer publishes an Intel macOS binary.
+          install_url: https://releases.nixos.org/nix/nix-2.35.6/install
+          install_sha256: 6f7bf206efb54cd4941fb274930dbc74fdfc16fcb06757ef261c8d7d69cfd60e
+          enable_kvm: false
+          set_as_trusted_user: false
+      - name: Build and check the locked flake
+        env:
+          EXPECTED_SYSTEM: ${{ matrix.system }}
+        run: |
+          test "$(nix eval --raw --impure --expr builtins.currentSystem)" = "$EXPECTED_SYSTEM"
+          nix flake check --no-update-lock-file --print-build-logs
+      - name: Check both CLI entry points
+        run: |
+          nix run --no-update-lock-file .#router -- --version
+          nix run --no-update-lock-file .#with-router -- --help

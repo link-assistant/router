@@ -230,8 +230,7 @@ impl EmergencyAuth {
             bypassed_by_reason: self
                 .reasons
                 .lock()
-                .map(|reasons| reasons.clone())
-                .unwrap_or_default(),
+                .map_or_default(|reasons| reasons.clone()),
         }
     }
 

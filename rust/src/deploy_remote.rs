@@ -428,8 +428,7 @@ fn run_with_ssh(
     }
     let collected = collected
         .lock()
-        .map(|mut collected| std::mem::take(&mut *collected))
-        .unwrap_or_default();
+        .map_or_default(|mut collected| std::mem::take(&mut *collected));
     let seeded = seeding::settle(&prepared.seeds, target, &collected.events);
     if args.json {
         let exit_code = exit_number(code);
@@ -465,7 +464,6 @@ fn exit_number(code: ExitCode) -> u8 {
 }
 
 /// Run the target-side deployment agent and preserve transport/lease identity.
-#[must_use]
 pub fn run(
     args: &DeployArgs,
     token_secret: &crate::translation_core::Str,
@@ -692,10 +690,7 @@ mod tests {
         let executable = directory.path().join("ssh");
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let fixture = crate_root.join("tests/fixtures/fake-ssh.sh");
-        std::fs::write(executable.with_extension("exit"), format!("{exit}\n")).unwrap();
-        // A concurrent fork can inherit a writable descriptor to a temporary
-        // executable and cause ETXTBSY until that child execs. Reuse a fixture
-        // that the tests never open for writing.
+        std::fs::write(executable.with_extension("body"), format!("exit {exit}\n")).unwrap();
         std::os::unix::fs::symlink(fixture, &executable).unwrap();
         (directory, executable)
     }

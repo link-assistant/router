@@ -21,7 +21,7 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
+//! regex = "1.13.2"
 //! ```
 
 use std::env;

@@ -14,24 +14,6 @@ show_tree = true
 
 [advisories]
 ignore = [
-    # RUSTSEC-2023-0071 — Marvin Attack (timing side channel) in `rsa` 0.9.
-    # No fixed release exists upstream. It reaches us only through
-    # `jsonwebtoken`, which pulls `rsa` in for the RS*/PS* JWT algorithms; this
-    # router signs and verifies its tokens with HMAC (HS256) and never performs
-    # an RSA private-key operation, so the vulnerable code path is not reached.
-    # Re-check when `rsa` 0.10 ships and `jsonwebtoken` picks it up.
-    "RUSTSEC-2023-0071",
-    # RUSTSEC-2026-0387 — timing variability in constant-time operations of
-    # `crypto-bigint` 0.5. The only fix is 0.7.6, a semver-incompatible line
-    # that nothing in our tree can use: 0.5.5 reaches us solely through
-    # `elliptic-curve` 0.13 (`p256`/`p384`/`ecdsa`/`primeorder`), which
-    # `jsonwebtoken` 11 pulls in for the ES256/ES384 JWT algorithms. This
-    # router builds every JWT key with `EncodingKey::from_secret` /
-    # `DecodingKey::from_secret` and the default HS256 `Header`/`Validation`
-    # (HMAC-SHA256), so no elliptic-curve arithmetic on secret integers ever
-    # runs. Re-check when moving to `jsonwebtoken` 12, whose `p256`/`p384` 0.14
-    # use `crypto-bigint` 0.7 through `elliptic-curve` 0.14.
-    "RUSTSEC-2026-0387",
     # RUSTSEC-2026-0543 — maintenance notice for `chrono` with no patched
     # release or reported vulnerability. It affects the existing direct
     # dependency and the `log-lazy` and `schemars` dependency paths. Remove

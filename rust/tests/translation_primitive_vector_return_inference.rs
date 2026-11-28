@@ -72,5 +72,5 @@ fn signed_extreme_and_empty_alternatives_preserve_the_domain() {
 #[test]
 fn boolean_literals_supply_an_unambiguous_domain() {
     let selected = if true { vec![] } else { vec![true, false] };
-    assert!(selected.is_empty());
+    assert_eq!(selected.len(), 0);
 }

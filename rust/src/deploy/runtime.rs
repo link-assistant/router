@@ -542,8 +542,8 @@ mod tests {
         );
         // An empty listing means nothing else holds the port, which must not
         // read as one container with an empty name.
-        assert!(parse_names("").is_empty());
-        assert!(parse_names("\n  \n").is_empty());
+        assert_eq!(parse_names("").len(), 0);
+        assert_eq!(parse_names("\n  \n").len(), 0);
     }
 
     #[test]

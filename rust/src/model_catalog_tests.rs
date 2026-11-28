@@ -140,14 +140,14 @@ fn a_valid_empty_catalog_is_an_authoritative_snapshot() {
         (SubscriptionProvider::Qwen, serde_json::json!({"data": []})),
     ] {
         let empty = parse_catalog(provider, &body).expect("valid empty catalog");
-        assert!(empty.is_empty());
+        assert_eq!(empty.len(), 0);
         let cache = ModelCatalogCache::new();
         cache.record_success(provider, vec!["withdrawn-model".into()]);
         cache.record_success(provider, empty);
         let status = cache.status(provider);
         assert!(status.discovered);
         assert!(status.credential_healthy);
-        assert!(status.routable_models().is_empty());
+        assert_eq!(status.routable_models().len(), 0);
     }
 }
 

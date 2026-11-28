@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 const FILE_NAME: &str = "response-affinities.lino";
 const STORE_VERSION: u32 = 1;
-const DEFAULT_TTL: Duration = Duration::from_secs(30 * 24 * 60 * 60);
+const DEFAULT_TTL: Duration = Duration::from_hours(720);
 const DEFAULT_MAX_RECORDS: usize = 10_000;
 const MAX_RESPONSE_ID_BYTES: usize = 256;
 

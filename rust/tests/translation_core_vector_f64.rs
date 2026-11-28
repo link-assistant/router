@@ -21,6 +21,6 @@ fn binary64_copy_retains_zero_subnormal_extrema_and_classification() {
             }
         }
         let empty: Vec<f64> = translation_core::vec![seed; 0usize];
-        assert!(empty.is_empty());
+        assert_eq!(empty.len(), 0);
     }
 }

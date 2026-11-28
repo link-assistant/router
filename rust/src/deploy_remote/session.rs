@@ -302,8 +302,7 @@ pub fn document(
         crate::translation_core::json!({"program": "ssh", "duration_ms": outcome.ssh_ms, "exit_code": outcome.ssh_exit}),
     );
     let provider_keys: Vec<Value> = values
-        .map(|values| values.provider_keys.as_slice())
-        .unwrap_or_default()
+        .map_or_default(|values| values.provider_keys.as_slice())
         .iter()
         .map(|key| {
             let reported = by_event(events, "provider_key")
@@ -359,7 +358,7 @@ mod tests {
 
     #[test]
     fn no_settings_add_no_ssh_options_and_no_payload() {
-        assert!(ssh_options(&SshSettings::default(), None).is_empty());
+        assert_eq!(ssh_options(&SshSettings::default(), None).len(), 0);
         assert_eq!(
             payload(&Merged::default(), None, false, "secret", &[]),
             None

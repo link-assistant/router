@@ -21,7 +21,7 @@ use crate::proxy::AppState;
 /// Error shown when Gonka is selected without a broker/API key.
 pub const MISSING_API_KEY_MESSAGE: &crate::translation_core::Str =
     "Gonka broker mode requires GONKA_API_KEY";
-const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
+const CATALOG_TTL: Duration = Duration::from_mins(5);
 const CATALOG_REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 const FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
 const MAX_CATALOG_BYTES: usize = 4 * 1024 * 1024;

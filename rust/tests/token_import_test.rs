@@ -80,7 +80,7 @@ fn a_second_import_changes_nothing_and_a_dry_run_writes_nothing() {
     };
     let planned = import(&target, vec![record("run")], dry).unwrap();
     assert_eq!(planned.added, ["run"]);
-    assert!(target.list().unwrap().is_empty());
+    assert_eq!(target.list().unwrap().len(), 0);
 
     import(&target, vec![record("run")], merge()).unwrap();
     let again = import(&target, vec![record("run")], merge()).unwrap();

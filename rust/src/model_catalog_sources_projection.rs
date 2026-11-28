@@ -207,14 +207,13 @@ fn truth(id: &str, provider: &str, raw: &serde_json::Map<String, Value>) -> Mode
         protocols: raw
             .get("router_protocols")
             .and_then(Value::as_array)
-            .map(|values| {
+            .map_or_default(|values| {
                 values
                     .iter()
                     .filter_map(Value::as_str)
                     .map(str::to_string)
                     .collect()
-            })
-            .unwrap_or_default(),
+            }),
     };
     definition
 }

@@ -40,7 +40,7 @@ fn data_shapes_const_generics_raw_fields_and_attribute_values_remain_independent
         bytes: [],
         r#type: false,
     };
-    assert!(empty.bytes.is_empty());
+    assert_eq!(empty.bytes.len(), 0);
     let Pair(number, flag) = Pair(7, true);
     assert_eq!(number, 7);
     assert!(flag);

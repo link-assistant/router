@@ -527,13 +527,12 @@ fn other_container_ids(root: &std::path::Path) -> Vec<String> {
         .output()
         .ok()
         .filter(|output| output.status.success())
-        .map(|output| {
+        .map_or_default(|output| {
             String::from_utf8_lossy(&output.stdout)
                 .split_whitespace()
                 .map(str::to_string)
                 .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
+        });
     String::from_utf8_lossy(&output.stdout)
         .lines()
         .map(str::trim)

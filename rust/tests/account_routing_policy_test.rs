@@ -218,7 +218,7 @@ fn aliases_prefixes_forks_and_exclusions_resolve_consistently() {
     );
     policy.excluded_models = vec!["nat*".into()];
     assert_eq!(policy.resolve_model("friendly", false), None);
-    assert!(policy.visible_models("native", false).is_empty());
+    assert_eq!(policy.visible_models("native", false).len(), 0);
 }
 
 #[test]

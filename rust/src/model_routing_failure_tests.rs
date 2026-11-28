@@ -228,12 +228,7 @@ async fn rejected_account_is_unavailable_for_every_known_model_and_logs_local_er
         StatusCode::UNAUTHORIZED
     );
     assert_rejected(&fixture.state, SubscriptionProvider::Claude);
-    assert!(
-        fixture.catalog().await["data"]
-            .as_array()
-            .unwrap()
-            .is_empty()
-    );
+    assert_eq!(fixture.catalog().await["data"].as_array().unwrap().len(), 0,);
     for model in [MODEL, OTHER_MODEL] {
         let (status, body, records) = fixture.request(model, true).await;
         assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE, "{body}");
@@ -320,12 +315,7 @@ async fn healthy_pool_account_serves_the_same_model_after_primary_rejection() {
         vec![MODEL.into()],
     );
     // A primary pin cannot use the healthy neighbour, even for the same model.
-    assert!(
-        fixture.catalog().await["data"]
-            .as_array()
-            .unwrap()
-            .is_empty()
-    );
+    assert_eq!(fixture.catalog().await["data"].as_array().unwrap().len(), 0,);
     let (status, body, records) = fixture.request(MODEL, true).await;
     assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE, "{body}");
     assert_eq!(body["error"]["type"], "account_unavailable");

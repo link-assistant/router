@@ -172,7 +172,7 @@ async fn initial_failure_keeps_the_live_catalog_and_sources_refresh_independentl
     );
     cache.refresh().await;
     assert_eq!(cache.definitions("local").len(), 1);
-    assert!(cache.definitions("anthropic").is_empty());
+    assert_eq!(cache.definitions("anthropic").len(), 0);
     assert!(cache.snapshot.read().unwrap().sources[0].failing);
 }
 
@@ -345,7 +345,7 @@ fn scoped_environment_defaults_and_invalid_polling_limits() {
         .environment
         .remove(std::ffi::OsStr::new("MODEL_CATALOG_REFRESH_SECS"));
     let default = context.scope(CatalogSourcesConfig::from_env).unwrap();
-    assert!(default.sources.is_empty());
+    assert_eq!(default.sources.len(), 0);
     assert_eq!(default.refresh_secs, 10800);
     context.set_env(
         "MODEL_CATALOG_SOURCES",
@@ -382,7 +382,7 @@ async fn unconfigured_and_local_only_sources_need_no_refresh_task_and_remain_ins
     assert!(first.clone().start().await.is_none());
     assert!(second.clone().start().await.is_none());
     assert_eq!(first.definitions("local").len(), 1);
-    assert!(second.definitions("local").is_empty());
+    assert_eq!(second.definitions("local").len(), 0);
     assert!(first.configure(CatalogSourcesConfig::default()).is_err());
 }
 

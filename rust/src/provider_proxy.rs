@@ -572,7 +572,7 @@ pub(crate) async fn forward_provider_at_routed(
     response
 }
 
-const PROVIDER_CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
+const PROVIDER_CATALOG_TTL: Duration = Duration::from_mins(5);
 const PROVIDER_FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
 
 fn openai_provider_catalog_fingerprint(provider: &ResolvedProvider) -> String {

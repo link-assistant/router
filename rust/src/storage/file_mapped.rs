@@ -24,16 +24,9 @@ const DOUBLETS_BOOTSTRAP_ITEMS: usize = 8 * 1024;
 /// dual store falls back to the text projection -- so the store can look
 /// healthy while every write fails (issue #374).
 ///
-/// Three things are needed, and `PersistentFileMapped` alone provides none of
-/// them:
-///
-/// * the capacity has to be adopted without writing over the persisted bytes,
-///   which `grow_filled` does not do -- despite its documentation it fills the
-///   whole region and empties the store (link-foundation/link-cli#102);
-/// * `grow` must return the complete allocation, because that is what
-///   `doublets` re-derives its pointers from, not just the new tail;
-/// * the store's initial bootstrap `shrink` has to be refused once, or it
-///   discards the capacity that was just adopted.
+/// `PersistentFileMapped::open_existing` adopts the capacity without touching
+/// persisted bytes. Doublets still asks to shrink the loaded allocation before
+/// reading its header, so keep the existing file capacity as the minimum.
 pub(super) struct LoadedFileMapped {
     inner: PersistentFileMapped<LinkPart<usize>>,
     minimum_capacity: usize,
@@ -48,22 +41,11 @@ impl LoadedFileMapped {
                 "mapped file length is not aligned to a doublets link part".into(),
             ));
         }
-        let mut inner = PersistentFileMapped::new(file)?;
-        let items = bytes.max(4096) / size_of::<LinkPart<usize>>();
-        // SAFETY: `grow_assumed` requires the grown region to be initialised.
-        // It is: these bytes were written as `LinkPart<usize>` values by a
-        // doublets store on this platform, and `LinkPart<usize>` is `repr(C)`
-        // over `usize` fields, so every bit pattern is valid. Its fill closure
-        // writes nothing, so no persisted byte is touched.
-        #[allow(unsafe_code)]
-        unsafe {
-            inner
-                .grow_assumed(items)
-                .map_err(|error| StorageError::Codec(format!("restore capacity: {error}")))?;
-        }
+        let inner = PersistentFileMapped::open_existing(file)?;
+        let minimum_capacity = inner.allocated().len();
         Ok(Self {
             inner,
-            minimum_capacity: items,
+            minimum_capacity,
         })
     }
 }
@@ -87,12 +69,7 @@ impl RawMem for LoadedFileMapped {
     ) -> doublets::mem::Result<&mut [Self::Item]> {
         // SAFETY: the caller supplies the initialisation callback `RawMem`
         // requires, and the wrapped mapping enforces the same contract.
-        unsafe {
-            self.inner.grow(addition, fill)?;
-        }
-        // The mapping returns only the newly grown tail; `doublets` expects the
-        // complete allocation when it refreshes its internal pointers.
-        Ok(self.inner.allocated_mut())
+        unsafe { self.inner.grow(addition, fill) }
     }
 
     fn shrink(&mut self, count: usize) -> doublets::mem::Result<()> {

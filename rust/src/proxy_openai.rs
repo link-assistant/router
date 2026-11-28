@@ -528,8 +528,7 @@ async fn openai_chat_completions_with_subscription(
     let dropped_tools = req
         .tools
         .as_ref()
-        .map(openai::untranslatable_anthropic_tools)
-        .unwrap_or_default();
+        .map_or_default(openai::untranslatable_anthropic_tools);
     if let Some(reason) = req
         .tools
         .as_ref()
@@ -933,8 +932,7 @@ async fn openai_responses_with_route(
     let dropped_tools = req
         .tools
         .as_ref()
-        .map(openai::untranslatable_anthropic_tools)
-        .unwrap_or_default();
+        .map_or_default(openai::untranslatable_anthropic_tools);
     if let Some(reason) = req
         .tools
         .as_ref()

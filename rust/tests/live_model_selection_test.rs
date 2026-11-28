@@ -172,8 +172,7 @@ fn a_live_credential_fetches_a_catalog_router_does_not_freeze() {
     // `synthetic_catalog_test` guards against reappearing.
     let stored: Vec<&str> = record["models"]
         .as_array()
-        .map(|models| models.iter().filter_map(Value::as_str).collect())
-        .unwrap_or_default();
+        .map_or_default(|models| models.iter().filter_map(Value::as_str).collect());
     assert!(
         stored.is_empty(),
         "a live provider must not freeze a model list into its record: {stored:?}"

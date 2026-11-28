@@ -217,7 +217,7 @@ async fn poll_until_authorized(
     login_id: &crate::translation_core::Str,
     provider: &crate::translation_core::Str,
 ) -> crate::translation_core::Outcome<(), String> {
-    let deadline = std::time::Instant::now() + Duration::from_secs(10 * 60);
+    let deadline = std::time::Instant::now() + Duration::from_mins(10);
     while std::time::Instant::now() < deadline {
         tokio::time::sleep(POLL_INTERVAL).await;
         let view: serde_json::Value = send(
@@ -310,8 +310,7 @@ fn report_status_credentials(body: &crate::translation_core::Json) -> bool {
     let entries = body
         .get("credentials")
         .and_then(serde_json::Value::as_array)
-        .map(Vec::as_slice)
-        .unwrap_or_default();
+        .map_or_default(Vec::as_slice);
     let mut refresh_failed = false;
     for entry in entries {
         let provider = entry
@@ -636,8 +635,7 @@ fn credential_report(body: &crate::translation_core::Json) -> Vec<String> {
     let rows = |key: &str| {
         body.get(key)
             .and_then(serde_json::Value::as_array)
-            .map(Vec::as_slice)
-            .unwrap_or_default()
+            .map_or_default(Vec::as_slice)
     };
     let accounts = rows("accounts");
     // `credentials` is the single-account answer; it is absent when a pool is

@@ -110,7 +110,7 @@ fn an_empty_collection_survives_both_encodings() {
 
     // And the JSON an earlier release wrote for the same value still loads.
     let decoded: Vec<Sample> = decode("[]").expect("decode JSON");
-    assert!(decoded.is_empty());
+    assert_eq!(decoded.len(), 0);
 }
 
 /// The decoder never turns a vendor's JSON into something else.

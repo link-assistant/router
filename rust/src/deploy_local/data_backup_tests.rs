@@ -112,12 +112,13 @@ fn replacement_with_an_empty_inventory_cannot_revive_a_text_projection() {
     store.put(record("created-later")).unwrap();
     drop(store);
     restore(root.path(), &snapshot, "secret", true).unwrap();
-    assert!(
+    assert_eq!(
         build_token_store_read_only(StoragePolicy::Both, &data)
             .unwrap()
             .list()
             .unwrap()
-            .is_empty()
+            .len(),
+        0,
     );
 }
 

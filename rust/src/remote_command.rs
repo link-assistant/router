@@ -200,7 +200,6 @@ pub fn no_remote_form(
 }
 
 /// Print a refusal and return its exit code.
-#[must_use]
 pub fn refuse(lines: Vec<String>) -> ExitCode {
     for line in lines {
         eprintln!("{line}");

@@ -160,8 +160,7 @@ fn set_mode(path: &Path, value: Option<u32>) -> Result<(), String> {
 fn is_credential(path: &Path) -> bool {
     let name = path
         .file_name()
-        .map(|name| name.to_string_lossy().to_ascii_lowercase())
-        .unwrap_or_default();
+        .map_or_default(|name| name.to_string_lossy().to_ascii_lowercase());
     name == ".claude.json"
         || name == "auth.json"
         || name == "oauth_creds.json"
@@ -697,7 +696,6 @@ fn verify_path(path: &Path) -> Result<Manifest, String> {
     Ok(manifest)
 }
 
-#[must_use]
 pub fn run(home: Option<&Path>, op: &BackupOp) -> ExitCode {
     let result = match op {
         BackupOp::Create {

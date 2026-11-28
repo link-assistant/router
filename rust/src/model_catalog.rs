@@ -49,7 +49,7 @@ pub fn classify_catalog_acceptance(result: &Result<Vec<String>, String>) -> Cata
 }
 
 /// How often live provider catalogs are refreshed.
-pub const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
+pub const CATALOG_TTL: Duration = Duration::from_mins(5);
 const FETCH_TIMEOUT: Duration = Duration::from_secs(15);
 const MAX_CATALOG_PAGES: usize = 100;
 
@@ -435,9 +435,7 @@ impl ModelCatalogCache {
         // Legacy anonymous catalogs contain no identity that can differ
         // between accounts. Preserve established anonymous Claude pools; any
         // known selected identity still fails ownership before dispatch.
-        status
-            .map(|status| self.routable_status(provider, effective_account, &status))
-            .unwrap_or_default()
+        status.map_or_default(|status| self.routable_status(provider, effective_account, &status))
     }
 
     /// Diagnostic state for every provider the cache knows about.

@@ -402,17 +402,16 @@ fn codex_cloud_words_used_as_option_values_or_prompts_are_not_commands() {
     }
 }
 
-/// The defect in the issue #297 follow-up: for four clients the injected mode
+/// The defect in the issue #297 follow-up: for three clients the injected mode
 /// argument takes the prompt as its *value*, and it was inserted immediately
 /// before whatever the user passed. With a flag there, that flag landed where
-/// the prompt belongs — Claude Code fails loudly, these four risk the next
+/// the prompt belongs — Claude Code fails loudly, these three risk the next
 /// argument being read as prompt text.
 #[test]
 fn a_mode_argument_that_takes_a_prompt_is_not_placed_before_a_flag() {
     for client in [
         ClientKind::GeminiCli,
         ClientKind::GrokCli,
-        ClientKind::QwenCode,
         ClientKind::Agent,
     ] {
         assert!(
@@ -438,6 +437,28 @@ fn a_mode_argument_that_takes_a_prompt_is_not_placed_before_a_flag() {
             "{client}: a mode that could not be applied must say so"
         );
     }
+}
+
+#[test]
+fn qwen_uses_positional_prompts_and_preserves_explicit_vendor_arguments() {
+    let launch = plan(&args(ClientKind::QwenCode, &["hello"]), Some("model"), true);
+    assert_eq!(rendered(&launch), vec!["--model", "model", "hello"]);
+    assert!(launch.one_shot);
+    assert!(launch.note.is_none());
+
+    for flag in ["-p", "--prompt"] {
+        let launch = plan(&args(ClientKind::QwenCode, &[flag, "hello"]), None, false);
+        assert_eq!(rendered(&launch), vec![flag, "hello"]);
+        assert!(launch.note.is_none());
+    }
+
+    let launch = plan(
+        &args(ClientKind::QwenCode, &["sessions", "list"]),
+        None,
+        false,
+    );
+    assert_eq!(rendered(&launch), vec!["sessions", "list"]);
+    assert!(!launch.one_shot);
 }
 
 /// With a prompt present the mode is applied as before, and the prompt follows

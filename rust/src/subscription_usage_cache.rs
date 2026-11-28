@@ -12,8 +12,8 @@ use super::{
     selected_lefine, unavailable_lefine_usage,
 };
 
-const STANDARD_CACHE_TTL: Duration = Duration::from_secs(3 * 60);
-const ANTHROPIC_CACHE_TTL: Duration = Duration::from_secs(13 * 60);
+const STANDARD_CACHE_TTL: Duration = Duration::from_mins(3);
+const ANTHROPIC_CACHE_TTL: Duration = Duration::from_mins(13);
 
 #[derive(Clone)]
 struct CacheEntry {

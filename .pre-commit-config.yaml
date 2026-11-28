@@ -3,9 +3,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^(?:dev/log/|docs/case-studies/|experiments/|ui/dist/)
+        exclude: ^(?:dev/log/|docs/case-studies/|experiments/|(?:rust/)?ui/dist/)
       - id: end-of-file-fixer
-        exclude: ^(?:CHANGELOG\.md$|dev/log/|docs/case-studies/|experiments/|ui/dist/)
+        exclude: ^(?:CHANGELOG\.md$|dev/log/|docs/case-studies/|experiments/|(?:rust/)?ui/dist/)
       - id: check-yaml
         args: [--allow-multiple-documents]
       - id: check-added-large-files

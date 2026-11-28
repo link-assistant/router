@@ -19,7 +19,7 @@ environment = {**os.environ, **home.env, 'TOKEN_SECRET':'http-client-fixture-sec
                'STORAGE_POLICY':'text', 'UPSTREAM_PROVIDER':'openai-compatible', 'OPENAI_COMPATIBLE_BASE_URL':upstream.origin,
                'OPENAI_COMPATIBLE_API_KEY':'http-client-fixture-key', 'UPSTREAM_ALLOW_PRIVATE_NETWORKS':'loopback',
                'ROUTER_VALIDATE_HTTP_CONTRACTS':'1'}
-binary = str(ROOT/'target/debug/router')
+binary = str(Path(os.environ.get('ROUTER_TEST_BIN', ROOT/'target/debug/router')).resolve())
 router = Router(binary=binary, env=environment, allow_download=False)
 process = None
 try:

@@ -518,7 +518,7 @@ fn provider_records_are_read_from_the_data_array() {
     let answer = serde_json::json!({"data": [{"name": "a"}, {"name": "b"}]});
     assert_eq!(records_in(&answer).len(), 2);
 
-    assert!(records_in(&serde_json::json!({})).is_empty());
+    assert_eq!(records_in(&serde_json::json!({})).len(), 0);
 }
 
 /// A loopback router for the remote provider tests.

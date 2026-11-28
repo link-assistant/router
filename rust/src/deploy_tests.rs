@@ -504,9 +504,9 @@ fn a_failure_names_the_step_what_was_expected_and_why_it_matters() {
 
     // The shape issue #572 asks for: a test asserts on the report, not on a
     // stack trace, so an operator who did not write the step can act on it.
-    assert!(!failure.step.is_empty());
-    assert!(!failure.expected.is_empty());
-    assert!(!failure.found.is_empty());
+    assert_ne!(failure.step, "");
+    assert_ne!(failure.expected, "");
+    assert_ne!(failure.found, "");
     assert!(
         failure.purpose.len() > 20,
         "the purpose explains what the check protects: {}",
@@ -526,7 +526,7 @@ fn every_step_reports_its_own_duration() {
     let report = converge(&runtime, &plan(root.path()));
 
     // Per-step timing is how "deployment is slow" becomes actionable at all.
-    assert!(!report.steps.is_empty());
+    assert_ne!(report.steps.len(), 0);
     for step in &report.steps {
         assert!(
             step.line().contains("ms") || step.failed(),

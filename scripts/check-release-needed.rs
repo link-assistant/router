@@ -29,10 +29,10 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
-//! ureq = "2"
-//! serde = { version = "1", features = ["derive"] }
-//! serde_json = "1"
+//! regex = "1.13.2"
+//! ureq = "3.5.2"
+//! serde = { version = "1.0.229", features = ["derive"] }
+//! serde_json = "1.0.154"
 //! ```
 
 use regex::Regex;
@@ -167,13 +167,13 @@ fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
     let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
 
     match ureq::get(&url)
-        .set("User-Agent", "rust-script-check-release")
+        .header("User-Agent", "rust-script-check-release")
         .call()
     {
-        Ok(response) => {
+        Ok(mut response) => {
             if response.status() == 200 {
                 // Version exists on crates.io
-                if let Ok(body) = response.into_string() {
+                if let Ok(body) = response.body_mut().read_to_string() {
                     if let Ok(data) = serde_json::from_str::<CratesIoVersion>(&body) {
                         return data.version.is_some();
                     }
@@ -181,7 +181,7 @@ fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
             }
             false
         }
-        Err(ureq::Error::Status(404, _)) => {
+        Err(ureq::Error::StatusCode(404)) => {
             // Version doesn't exist on crates.io
             false
         }
@@ -219,11 +219,11 @@ fn check_docker_hub_tag(image: &str, version: &str) -> bool {
     );
 
     match ureq::get(&url)
-        .set("User-Agent", "rust-script-check-release")
+        .header("User-Agent", "rust-script-check-release")
         .call()
     {
         Ok(response) => response.status() == 200,
-        Err(ureq::Error::Status(404, _)) => false,
+        Err(ureq::Error::StatusCode(404)) => false,
         Err(e) => {
             eprintln!("Warning: Could not check Docker Hub tag: {}", e);
             false
@@ -238,24 +238,26 @@ fn check_github_release(repository: &str, version: &str) -> bool {
     );
 
     let mut request = ureq::get(&url)
-        .set("User-Agent", "rust-script-check-release")
-        .set("Accept", "application/vnd.github+json");
+        .header("User-Agent", "rust-script-check-release")
+        .header("Accept", "application/vnd.github+json");
 
     if let Ok(token) = env::var("GITHUB_TOKEN") {
         if !token.is_empty() {
             let auth_header = format!("Bearer {}", token);
-            request = request.set("Authorization", &auth_header);
+            request = request.header("Authorization", auth_header.as_str());
         }
     }
 
     match request.call() {
-        Ok(response) => serde_json::from_reader::<_, serde_json::Value>(response.into_reader())
-            .map(|release| release_status::is_stable_release(&release))
-            .unwrap_or_else(|error| {
-                eprintln!("Warning: Could not parse GitHub release: {error}");
-                false
-            }),
-        Err(ureq::Error::Status(404, _)) => false,
+        Ok(response) => {
+            serde_json::from_reader::<_, serde_json::Value>(response.into_body().into_reader())
+                .map(|release| release_status::is_stable_release(&release))
+                .unwrap_or_else(|error| {
+                    eprintln!("Warning: Could not parse GitHub release: {error}");
+                    false
+                })
+        }
+        Err(ureq::Error::StatusCode(404)) => false,
         Err(e) => {
             eprintln!("Warning: Could not check GitHub release: {}", e);
             false

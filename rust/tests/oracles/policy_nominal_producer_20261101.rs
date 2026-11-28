@@ -49,9 +49,9 @@ fn actual_original_policy_owners_preserve_every_client_provider_pair_and_detache
         override_providers(&input),
         clients.iter().flat_map(|_| providers).collect::<Vec<_>>()
     );
-    assert!(copied_overrides(&[]).is_empty());
-    assert!(override_clients(&[]).is_empty());
-    assert!(override_providers(&[]).is_empty());
+    assert_eq!(copied_overrides(&[]).len(), 0);
+    assert_eq!(override_clients(&[]).len(), 0);
+    assert_eq!(override_providers(&[]).len(), 0);
     let full = vec![input[0]; 4096];
     assert_eq!(bounded_overrides(&full), full);
     assert_eq!(override_clients(&full), vec![Codex; 4096]);

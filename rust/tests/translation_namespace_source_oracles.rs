@@ -54,7 +54,7 @@ mod conditions {
                 observed.push(value);
             }
             assert_eq!(observed, expected);
-            assert!(remaining.is_empty());
+            assert_eq!(remaining.len(), 0);
         }
     }
 }

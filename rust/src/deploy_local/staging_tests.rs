@@ -269,7 +269,7 @@ fn absent_status_and_foreign_data_never_adopt_or_create_resources() {
     );
     assert_eq!(fs::read(root.join("primary-project")).unwrap(), b"retain");
     assert!(!root.join(MARKER).exists());
-    assert!(runner.0.lock().unwrap().commands.is_empty());
+    assert_eq!(runner.0.lock().unwrap().commands.len(), 0);
 }
 
 #[test]
@@ -290,7 +290,7 @@ fn journal_drift_and_foreign_network_refuse_before_candidate_mutation() {
             .unwrap_err()
             .contains("identity/root")
     );
-    assert!(runner.0.lock().unwrap().commands.is_empty());
+    assert_eq!(runner.0.lock().unwrap().commands.len(), 0);
     fs::write(root.join(MARKER), journal).unwrap();
     assert!(
         execute(&args, &root, "router:2.0.0", &docker)

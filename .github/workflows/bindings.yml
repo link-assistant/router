@@ -27,25 +27,30 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-15]
-        node: ['20', '24']
+        node: ['20.20.2', '24.22.3', '26.13.1']
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
-          toolchain: 1.98.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+          toolchain: 1.100.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: ${{ matrix.node }}
           cache: npm
           cache-dependency-path: js/package-lock.json
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+      - run: npm install --global "npm@$NPM_VERSION" --ignore-scripts
+        env:
+          NPM_VERSION: ${{ matrix.node == '20.20.2' && '11.21.3' || '12.2.3' }}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.node == '26.13.1' && '3.15.2' || '3.10' }}
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.5'
       - run: cargo build --locked --bins
       - run: python scripts/generate-contracts.py --check
       - run: python scripts/generate-bindings.py --check
@@ -65,13 +70,15 @@ jobs:
         working-directory: js
       - run: bun test test/router.test.js
         working-directory: js
-      - run: python -m pip install -e packages/python
-      - run: python -m unittest discover -s packages/python/tests -v
+      - run: python -m pip install uv==0.13.10
+      - run: uv run --project packages/python --python "$(command -v python)" --locked python -m unittest discover -s packages/python/tests -v
+      - name: Audit locked Python dependencies
+        if: runner.os == 'Linux' && matrix.node == '26.13.1'
+        run: uv run --project packages/python --python "$(command -v python)" --locked python -m pip_audit --skip-editable
       - name: Verify distributions
         run: |
           (cd js && npm pack --dry-run)
-          python -m pip install build
-          python -m build packages/python
+          uv run --project packages/python --python "$(command -v python)" --locked python -m build packages/python
   semver:
     needs: [javascript]
     if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success' && (github.event_name == 'pull_request'))
@@ -81,10 +88,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
-          toolchain: 1.98.1
-      - run: cargo install cargo-semver-checks --version 0.51.0 --locked
+          toolchain: 1.100.1
+      - run: bash scripts/install-ci-cargo-tool.sh cargo-semver-checks
       - name: Check documented minor API changes against PR base
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -104,14 +111,40 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
-          toolchain: 1.98.1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+          toolchain: 1.100.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
-          python-version: '3.10'
+          python-version: '3.15.2'
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: '1.27.4'
+          cache: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '27'
+          check-latest: true
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.6'
+          tools: composer:2.11.3
+          coverage: none
+      - name: Install pinned Maven for the generated Java client
+        run: |
+          version=3.10.2
+          artifact="apache-maven-$version-bin.tar.gz"
+          cd "$RUNNER_TEMP"
+          artifact_path="org/apache/maven/apache-maven/$version/$artifact"
+          if ! curl -fsSL --proto '=https' "https://maven-central.storage-download.googleapis.com/maven2/$artifact_path" -o "$artifact"; then
+            curl -fsSL --proto '=https' "https://repo.maven.apache.org/maven2/$artifact_path" -o "$artifact"
+          fi
+          printf '%s  %s\n' 57d2db6b37e7582119137ade544557bba741b29e62109ef81539a2bdfd6d0e641fdd5d8edb014af1816d0510deac6fac8f347433b3a1aa36316ba85aa77b8119 "$artifact" | sha512sum --check --strict
+          tar -xzf "$artifact"
+          printf '%s/apache-maven-%s/bin\n' "$RUNNER_TEMP" "$version" >> "$GITHUB_PATH"
       - run: cargo build --locked --bins
-      - run: python3 -m pip install -e packages/python
+      - run: python -m pip install uv==0.13.10
       - run: bash scripts/generate-http-clients.sh
       - name: Configure the Maven Central mirror for the generated Java client
         run: |
@@ -128,4 +161,4 @@ jobs:
           </settings>
           EOF
           printf 'MAVEN_ARGS=--settings %s\n' "$settings" >> "$GITHUB_ENV"
-      - run: bash scripts/test-http-clients.sh
+      - run: uv run --project packages/python --python "$(command -v python)" --locked bash scripts/test-http-clients.sh

@@ -644,8 +644,7 @@ async fn vertex_proxy_handler(State(state): State<AppState>, request: Request) -
     let path = request.uri().path();
     let model_action = path
         .split_once("/publishers/anthropic/models/")
-        .map(|(_, action)| action)
-        .unwrap_or_default();
+        .map_or_default(|(_, action)| action);
     let direct = !model_action.contains('/')
         && (model_action
             .strip_suffix(":rawPredict")

@@ -39,7 +39,7 @@ mod tests {
         let character = frame.iter().position(|byte| *byte == 0xe4).unwrap();
         for split in [character + 1, character + 2] {
             let mut buffer = Vec::new();
-            assert!(push_blocks(&mut buffer, &frame[..split]).is_empty());
+            assert_eq!(push_blocks(&mut buffer, &frame[..split]).len(), 0);
             let blocks = push_blocks(&mut buffer, &frame[split..]);
             assert_eq!(blocks, ["data: {\"delta\":\"世\"}"]);
             assert!(!blocks[0].contains('\u{fffd}'));

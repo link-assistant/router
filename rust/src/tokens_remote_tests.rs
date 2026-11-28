@@ -132,8 +132,11 @@ fn records_are_read_from_the_data_array() {
     let answer = serde_json::json!({"data": [{"id": "a"}, {"id": "b"}]});
     assert_eq!(records_in(&answer).len(), 2);
 
-    assert!(records_in(&serde_json::json!({})).is_empty());
-    assert!(records_in(&serde_json::json!({"data": "not an array"})).is_empty());
+    assert_eq!(records_in(&serde_json::json!({})).len(), 0);
+    assert_eq!(
+        records_in(&serde_json::json!({"data": "not an array"})).len(),
+        0
+    );
 }
 
 /// The target flags never leak into the request body.

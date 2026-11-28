@@ -34,7 +34,7 @@ fn borrowed_alias_keeps_original_storage_and_empty_input() {
     let view: &Str = original.as_str();
     assert_eq!(identity(view), "Ω猫😀");
     assert_eq!(identity(view).as_ptr(), original.as_ptr());
-    assert!(identity("").is_empty());
+    assert_eq!(identity(""), "");
 }
 
 #[test]

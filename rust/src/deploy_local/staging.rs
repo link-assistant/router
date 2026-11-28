@@ -454,7 +454,6 @@ fn execute_with_disk(
     )
 }
 
-#[must_use]
 pub fn run(args: &DeployArgs, root: &Path, image: &crate::translation_core::Str) -> ExitCode {
     let result = namespace(args.staging.as_deref().expect("staging dispatch")).and_then(|_| {
         // Status/verification report existing state without planning a start.

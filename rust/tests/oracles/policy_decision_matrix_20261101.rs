@@ -106,9 +106,9 @@ fn actual_complete_policy_cells_match_independent_empty_and_full_tables() {
     }
     assert_eq!(seen.len(), clients.len() * protocols.len());
     assert_eq!(cell_count, 480);
-    assert!(defaults.overrides().is_empty());
-    assert!(empty.overrides().is_empty());
-    assert!(full.proxied_clients().is_empty());
+    assert_eq!(defaults.overrides().len(), 0);
+    assert_eq!(empty.overrides().len(), 0);
+    assert_eq!(full.proxied_clients().len(), 0);
 }
 
 #[test]
@@ -153,7 +153,7 @@ fn actual_all_parse_pairs_keep_the_review_boundary_and_full_set_sort_order() {
             detached.clear();
             let after: Vec<_> = policy.overrides().iter().map(ToString::to_string).collect();
             assert_eq!(after, expected);
-            assert!(policy.proxied_clients().is_empty());
+            assert_eq!(policy.proxied_clients().len(), 0);
         }
     }
 }

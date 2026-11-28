@@ -12,7 +12,7 @@ fn copy_values_empty_and_machine_counts() {
     assert_eq!(signed, [-128, -128]);
     assert_eq!(wide, [u128::MAX, u128::MAX]);
     let empty: Vec<u8> = translation_core::vec![7u8; 0usize];
-    assert!(empty.is_empty());
+    assert_eq!(empty.len(), 0);
 }
 
 #[test]
@@ -22,7 +22,7 @@ fn seed_runs_once_including_zero() {
     assert_eq!(values, [7, 7, 7]);
     assert_eq!(calls, 1);
     let empty: Vec<u8> = translation_core::vec![{ calls += 1; 7u8 }; 0usize];
-    assert!(empty.is_empty());
+    assert_eq!(empty.len(), 0);
     assert_eq!(calls, 2);
 }
 

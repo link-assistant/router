@@ -159,13 +159,13 @@ fn a_wildcard_published_port_is_a_candidate() {
 /// from loopback, so probing it would waste a connect timeout per command.
 #[test]
 fn an_externally_bound_port_is_not_a_candidate() {
-    assert!(parse_published_ports("192.168.1.5:9000->8080/tcp").is_empty());
+    assert_eq!(parse_published_ports("192.168.1.5:9000->8080/tcp").len(), 0);
 }
 
 /// An exposed-but-unpublished port has no host side to connect to.
 #[test]
 fn an_unpublished_port_is_not_a_candidate() {
-    assert!(parse_published_ports("8080/tcp").is_empty());
+    assert_eq!(parse_published_ports("8080/tcp").len(), 0);
 }
 
 /// Several containers are listed together, and each publication is separate.
@@ -191,11 +191,14 @@ fn a_repeated_published_port_appears_once() {
 /// may be absent, stopped, or newer than this parser.
 #[test]
 fn an_unparseable_listing_yields_no_candidates() {
-    assert!(parse_published_ports("").is_empty());
-    assert!(parse_published_ports("   ").is_empty());
-    assert!(parse_published_ports("nonsense").is_empty());
-    assert!(parse_published_ports("127.0.0.1:notaport->8080/tcp").is_empty());
-    assert!(parse_published_ports("127.0.0.1:0->8080/tcp").is_empty());
+    assert_eq!(parse_published_ports("").len(), 0);
+    assert_eq!(parse_published_ports("   ").len(), 0);
+    assert_eq!(parse_published_ports("nonsense").len(), 0);
+    assert_eq!(
+        parse_published_ports("127.0.0.1:notaport->8080/tcp").len(),
+        0
+    );
+    assert_eq!(parse_published_ports("127.0.0.1:0->8080/tcp").len(), 0);
 }
 
 /// A machine with no Docker must still discover the conventional ports, so the
@@ -241,7 +244,7 @@ async fn the_effective_source_describes_what_the_next_command_will_use() {
 
     // Whichever branch this machine is in, the answer must name something, and
     // a discovered router must be reported as such rather than as a container.
-    assert!(!reported.is_empty());
+    assert_ne!(reported, "");
     if let Some(url) = discover_local_router(false).await {
         assert!(
             reported.contains(&url),
@@ -272,8 +275,8 @@ async fn a_discovered_server_carries_no_managed_lease() {
 /// that can never answer.
 #[test]
 fn a_mapping_without_a_host_address_is_not_a_candidate() {
-    assert!(parse_published_ports("->8080/tcp").is_empty());
-    assert!(parse_published_ports("nocolon->8080/tcp").is_empty());
+    assert_eq!(parse_published_ports("->8080/tcp").len(), 0);
+    assert_eq!(parse_published_ports("nocolon->8080/tcp").len(), 0);
 }
 
 /// `ROUTER_PORT` is the port a locally started router binds, so it must be the
@@ -336,7 +339,7 @@ fn source_draft_candidate_hosts_protocol_and_retained_listing_are_bounded() {
         .collect::<Vec<_>>()
         .join(",");
     assert_eq!(parse_published_ports(&listing).len(), 64);
-    assert!(parse_published_ports(&" ".repeat(65_537)).is_empty());
+    assert_eq!(parse_published_ports(&" ".repeat(65_537)).len(), 0);
 }
 
 #[tokio::test]

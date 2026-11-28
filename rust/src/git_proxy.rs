@@ -330,8 +330,7 @@ pub fn scope_admits(
 /// Terminate a git smart-HTTP request, enforcing ref policy before forwarding.
 pub async fn proxy(State(state): State<AppState>, request: Request) -> Response {
     let scope = crate::proxy::authenticate_client_error(&state, request.headers())
-        .map(|claims| claims.github_repos)
-        .unwrap_or_default();
+        .map_or_default(|claims| claims.github_repos);
     forward(&state, &scope, request).await
 }
 

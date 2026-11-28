@@ -509,7 +509,7 @@ async fn zai_probe_uses_official_non_inference_request_shape_and_normalizes_quot
     let hits = hits.lock().unwrap();
     assert_eq!(hits.len(), 3);
     assert_eq!(hits[0].0, "/api/monitor/usage/quota/limit");
-    assert!(hits[0].1.is_empty());
+    assert_eq!(hits[0].1, "");
     for hit in hits.iter() {
         assert_eq!(hit.2, "zai-secret-key");
     }

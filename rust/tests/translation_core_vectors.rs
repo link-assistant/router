@@ -10,7 +10,7 @@ fn primitive_text_and_empty_vectors() {
     let flags: Vec<bool> = translation_core::vec![true, false];
     assert_eq!(flags, [true, false]);
     let empty: Vec<bool> = translation_core::vec![];
-    assert!(empty.is_empty());
+    assert_eq!(empty.len(), 0);
     let headers: Vec<&'static translation_core::Str> =
         translation_core::vec!["user-agent", "😀", "content-type"];
     assert_eq!(headers, ["user-agent", "😀", "content-type"]);

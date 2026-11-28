@@ -30,22 +30,20 @@ mod anthropic_mock;
 mod common;
 use anthropic_mock::THINKING_TRACE;
 
-/// The pinned 2.1.265 baseline, or the newer release CI installs to prove
-/// that Router does not depend on the baseline being the newest client
-/// (issue #609). It is a tested version, not a supported maximum.
+/// The capture pin or the compatibility release selected by CI (issue #609).
 const CLAUDE_VERSION: &str = match option_env!("ROUTER_REAL_CLIENT_CLAUDE_VERSION") {
     Some(version) => version,
-    None => "2.1.265",
+    None => "2.1.332",
 };
 /// The pinned baseline, or a newer release CI installs so that bootstrap drift,
 /// such as the 0.157 workspace discovery (issue #612), fails where it changed.
 const CODEX_VERSION: &str = match option_env!("ROUTER_REAL_CLIENT_CODEX_VERSION") {
     Some(version) => version,
-    None => "0.154.0",
+    None => "0.172.0",
 };
 const OPENCODE_VERSION: &str = match option_env!("ROUTER_REAL_CLIENT_OPENCODE_VERSION") {
     Some(version) => version,
-    None => "1.18.29",
+    None => "1.19.6",
 };
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
 const SUBAGENT_PROMPT: &str = "Use the Agent tool once, then reply ROUTER_CAPTURE_OK.";

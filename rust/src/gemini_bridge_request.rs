@@ -757,10 +757,9 @@ fn validate_chat_contract(body: &Value) -> Result<(), String> {
 }
 
 fn validate_responses_contract(body: &Value) -> Result<(), String> {
-    for field in ["user"] {
-        if body.get(field).is_some_and(|value| !value.is_null()) {
-            return Err(format!("{field} cannot be represented by Gemini"));
-        }
+    let field = "user";
+    if body.get(field).is_some_and(|value| !value.is_null()) {
+        return Err(format!("{field} cannot be represented by Gemini"));
     }
     if body.get("metadata").is_some_and(|value| {
         !value.is_null() && value.as_object().is_none_or(|values| !values.is_empty())

@@ -49,7 +49,10 @@ fn predicate_operations_stop_at_the_first_decisive_value() {
 
 #[test]
 fn empty_inputs_have_their_actual_identities() {
-    assert!(json_filter(&[], |_| panic!("empty filter callback")).is_empty());
+    assert_eq!(
+        json_filter(&[], |_| panic!("empty filter callback")).len(),
+        0
+    );
     assert!(!json_any(&[], |_| panic!("empty any callback")));
     assert!(json_all(&[], |_| panic!("empty all callback")));
     assert_eq!(json_find(&[], |_| panic!("empty find callback")), None);

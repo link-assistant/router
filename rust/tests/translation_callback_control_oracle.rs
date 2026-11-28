@@ -4,6 +4,9 @@
 //! has not run rustc, Cargo, or these tests. Option `?` callback admission stays
 //! pending its actual original Try/FromResidual ownership proof.
 
+// The explicit returns are the callback behavior exercised by this oracle.
+#![allow(clippy::needless_bool)]
+
 fn outer() -> u64 {
     let found = (0u8..4u8).any(|value| {
         if value == 2u8 {

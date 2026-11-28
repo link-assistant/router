@@ -763,7 +763,7 @@ fn an_unreachable_selection_names_itself_and_the_way_out() {
         .output()
         .expect("run with");
 
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr.len(), 0);
     let stderr = fs::read_to_string(home.join(".link-assistant-router/logs/operational.log"))
         .expect("persistent discovery failure");
     assert!(!output.status.success(), "an unreachable selection fails");

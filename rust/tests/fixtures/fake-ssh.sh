@@ -1,7 +1,6 @@
 #!/bin/sh
-set -eu
-
+# Tests link to this executable and write only the shell body. A concurrent
+# fork can inherit a writable body descriptor without blocking execution.
 printf '%s\n' "$@" > "$0.arguments"
 cat > "$0.input"
-IFS= read -r status < "$0.exit"
-exit "$status"
+. "$0.body"

@@ -23,8 +23,8 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! serde_json = "1"
-//! ureq = "2"
+//! serde_json = "1.0.154"
+//! ureq = "3.5.2"
 //! ```
 
 use std::path::{Path, PathBuf};
@@ -165,28 +165,36 @@ fn record_cassette(path: &Path) -> Result<String, String> {
     if body.get("model").is_some() {
         body["model"] = json!(model);
     }
-    let mut request = ureq::post(&url).set("content-type", "application/json");
-    request = if field("auth_header") == "authorization" {
-        request.set("authorization", &format!("Bearer {key}"))
+    let config = ureq::Agent::config_builder().http_status_as_error(false).build();
+    let agent = ureq::Agent::new_with_config(config);
+    let mut request = agent.post(&url).header("content-type", "application/json");
+    let auth_header = field("auth_header");
+    let auth_value = if auth_header == "authorization" {
+        format!("Bearer {key}")
     } else {
-        request.set(&field("auth_header"), &key)
+        key
     };
+    request = request.header(auth_header.as_str(), auth_value.as_str());
+    let request_headers = request.headers_mut().ok_or("invalid vendor request")?;
     for (name, value) in record["headers"].as_object().into_iter().flatten() {
-        request = request.set(name, value.as_str().unwrap_or_default());
+        let name = name.parse::<ureq::http::HeaderName>()
+            .map_err(|error| format!("invalid fixture header name: {error}"))?;
+        let value = value.as_str().unwrap_or_default().parse::<ureq::http::HeaderValue>()
+            .map_err(|error| format!("invalid fixture header value: {error}"))?;
+        request_headers.insert(name, value);
     }
-    let response = match request.send_string(&body.to_string()) {
-        Ok(response) | Err(ureq::Error::Status(_, response)) => response,
-        Err(error) => return Err(format!("request failed: {error}")),
-    };
-    let status = response.status();
+    let mut response = request.send(body.to_string().as_str())
+        .map_err(|error| format!("request failed: {error}"))?;
+    let status = response.status().as_u16();
     let mut headers = Map::new();
     for name in KEPT_HEADERS {
-        if let Some(value) = response.header(name) {
+        if let Some(value) = response.headers().get(*name).and_then(|value| value.to_str().ok()) {
             headers.insert((*name).to_string(), json!(value));
         }
     }
     let text = response
-        .into_string()
+        .body_mut()
+        .read_to_string()
         .map_err(|error| format!("read body: {error}"))?;
     let envelope = record["code_assist_envelope"].as_bool() == Some(true);
     let mut recorded = json!({"status": status, "headers": headers});

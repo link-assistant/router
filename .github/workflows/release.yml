@@ -88,12 +88,12 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Detect changes
         id: changes
@@ -119,12 +119,12 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Check for changelog fragments
         env:
@@ -145,12 +145,12 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Check for manual version changes
         env:
@@ -170,7 +170,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:
           buildkitd-config-inline: |
             [registry."docker.io"]
@@ -211,14 +211,19 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Check dependency bootstrap scripts
+        run: |
+          bash experiments/issue-810/check-cargo-tool-install.sh
+          bash experiments/issue-810/check-linux-verifier-runtime.sh
+
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
           components: rustfmt, clippy
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       # Compilation-level cache, complementing the artifact cache below.
       # `actions/cache` is keyed on `Cargo.lock`, so a single dependency bump
@@ -275,19 +280,23 @@ jobs:
       - name: Setup Node
         id: privacy-node
         if: ${{ !cancelled() }}
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26.13.1'
           cache: npm
-          cache-dependency-path: ui/package-lock.json
+          cache-dependency-path: |
+            ui/package-lock.json
+            experiments/issue-781/package-lock.json
+      - run: npm install --global npm@12.2.3 --ignore-scripts
+        if: ${{ !cancelled() && steps.privacy-node.outcome == 'success' }}
 
       - name: Test the published sensitive data sanitizer integration
         if: ${{ !cancelled() && steps.privacy-node.outcome == 'success' }}
         timeout-minutes: 5
+        env:
+          ROUTER_SANITIZER_TEST_PREFIX: ${{ github.workspace }}/experiments/issue-781
         run: |
-          export ROUTER_SANITIZER_TEST_PREFIX="$(mktemp -d)"
-          trap 'rm -rf -- "$ROUTER_SANITIZER_TEST_PREFIX"' EXIT
-          npm install --prefix "$ROUTER_SANITIZER_TEST_PREFIX" --save-exact --ignore-scripts @link-foundation/sensitive-data-sanitizer@0.23.0
+          npm ci --prefix "$ROUTER_SANITIZER_TEST_PREFIX" --ignore-scripts
           node --test experiments/issue-781/published-sanitizer.test.mjs
 
       - name: Install admin console dependencies
@@ -374,9 +383,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       # Compilation-level cache, complementing the artifact cache below.
       # `actions/cache` is keyed on `Cargo.lock`, so a single dependency bump
@@ -406,33 +415,44 @@ jobs:
             ${{ runner.os }}-cargo-audit-
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit --version 0.22.2 --locked --force
+        run: bash scripts/install-ci-cargo-tool.sh cargo-audit
 
       - name: Audit Rust dependencies
-        run: cargo audit
+        run: |
+          status=0
+          for lock in Cargo.lock rust/fuzz/Cargo.lock experiments/issue-725/test-sharder/Cargo.lock; do
+            cargo audit --file "$lock" || status=1
+          done
+          exit "$status"
+
+      - name: Check pinned release SBOM tool
+        if: ${{ !cancelled() }}
+        run: |
+          bash scripts/install-ci-cargo-tool.sh cargo-cyclonedx
+          cargo cyclonedx --version
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        id: audit-node
+        if: ${{ !cancelled() }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26.13.1'
+      - run: npm install --global npm@12.2.3 --ignore-scripts
+        if: ${{ !cancelled() && steps.audit-node.outcome == 'success' }}
+
+      - name: Audit JavaScript and TypeScript dependencies
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          for project in js ts scripts/ci experiments/issue-781; do
+            npm audit --prefix "$project" || status=1
+          done
+          exit "$status"
 
       - name: Audit admin console dependencies
+        if: ${{ !cancelled() }}
         working-directory: ui
-        env:
-          # The unpatched advisory affects a build-only matcher of repository
-          # globs. Keep the default-branch audit red with remediation details.
-          ROUTER_ALLOW_REVIEWED_UI_AUDIT: ${{ github.event_name == 'pull_request' && github.event.pull_request.number == 794 }}
-        run: |
-          if npm audit --audit-level=high; then
-            exit 0
-          fi
-          report="$(mktemp)"
-          trap 'rm -f -- "$report"' EXIT
-          if npm audit --audit-level=high --json > "$report"; then
-            exit 0
-          fi
-          node --test ../experiments/issue-781/admin-ui-audit.test.mjs
-          node ../scripts/check-admin-ui-audit.mjs "$report" package-lock.json
+        run: npm audit --audit-level=low
 
   # === TEST ===
   # Test runs independently of changelog check
@@ -463,9 +483,9 @@ jobs:
           GIT_CONFIG_VALUE_0: 'false'
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       # Compilation-level cache, complementing the artifact cache below.
       # `actions/cache` is keyed on `Cargo.lock`, so a single dependency bump
@@ -642,10 +662,13 @@ jobs:
       # util.types.isProxy prints without a name, and the translator guards that
       # pin native function text reject it ("original source operations changed").
       - name: Setup Node for native profile source orchestration
+        id: native-profile-node
         if: ${{ always() && !cancelled() }}
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: '20'
+          node-version: '20.20.2'
+      - run: npm install --global npm@11.21.3 --ignore-scripts
+        if: ${{ always() && !cancelled() && steps.native-profile-node.outcome == 'success' }}
 
       - name: Install locked native profile source dependencies
         if: ${{ always() && !cancelled() }}
@@ -677,7 +700,7 @@ jobs:
 
       - name: Retain complete native profile evidence
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: native-profile-oracles-${{ runner.os }}-${{ github.sha }}
           path: ${{ runner.temp }}/router-native-profile-oracles/
@@ -699,9 +722,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
           components: llvm-tools-preview
 
       - name: Cache coverage tools
@@ -713,16 +736,18 @@ jobs:
             ~/.cargo/bin
             ~/.cargo/.crates.toml
             ~/.cargo/.crates2.json
-          key: ${{ runner.os }}-cargo-coverage-v2-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-coverage-v3-${{ hashFiles('scripts/ci/cargo-tools/rust-script/Cargo.lock', 'scripts/ci/cargo-tools/releases.tsv') }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-coverage-v2-
+            ${{ runner.os }}-cargo-coverage-v3-${{ hashFiles('scripts/ci/cargo-tools/rust-script/Cargo.lock', 'scripts/ci/cargo-tools/releases.tsv') }}-
 
       - name: Install coverage tools
+        env:
+          LLVM_COV_VERSION: '0.9.2'
         run: |
-          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.1'; then
-            cargo install cargo-llvm-cov --version 0.9.1 --locked --force
+          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx "cargo-llvm-cov $LLVM_COV_VERSION"; then
+            cargo install cargo-llvm-cov --version "$LLVM_COV_VERSION" --locked --force
           fi
-          command -v rust-script >/dev/null || cargo install rust-script --version 0.36.0 --locked
+          command -v rust-script >/dev/null || bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Test coverage gate behavior
         run: rust-script --test scripts/check-coverage.rs
@@ -751,13 +776,20 @@ jobs:
         shell: bash
         env:
           BASELINE_ARGUMENT: ${{ steps.base-coverage.outputs.argument }}
-          COVERAGE_EXCEPTION: ${{ contains(github.event.pull_request.labels.*.name, 'coverage-exception') }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # A queued run can carry a label snapshot from before a maintainer's change.
+          coverage_exception=false
+          if [ -n "$PR_NUMBER" ]; then
+            coverage_exception=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" \
+              --jq '.labels | map(.name) | index("coverage-exception") != null')
+          fi
           args=(--report coverage-summary.json --baseline coverage-baseline.txt --summary "$GITHUB_STEP_SUMMARY")
           if [ -n "$BASELINE_ARGUMENT" ]; then
             args+=(--previous-baseline /tmp/base-coverage-baseline.txt)
           fi
-          if [ "$COVERAGE_EXCEPTION" = "true" ]; then
+          if [ "$coverage_exception" = "true" ]; then
             args+=(--allow-decrease)
           fi
           rust-script scripts/check-coverage.rs "${args[@]}"
@@ -772,7 +804,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: rust-lcov
           path: |
@@ -792,9 +824,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       # Compilation-level cache, complementing the artifact cache below.
       # `actions/cache` is keyed on `Cargo.lock`, so a single dependency bump
@@ -851,12 +883,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Configure git
         run: rust-script scripts/git-config.rs
@@ -913,12 +945,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Configure git
         run: rust-script scripts/git-config.rs
@@ -977,20 +1009,20 @@ jobs:
         run: test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           username: konard
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Extract Docker metadata
         id: docker-meta
@@ -1069,7 +1101,7 @@ jobs:
           touch "/tmp/digests/${{ matrix.variant }}/${IMAGE_DIGEST#sha256:}"
 
       - name: Upload image digest
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.variant }}-${{ matrix.arch }}
           path: /tmp/digests/${{ matrix.variant }}/*
@@ -1099,28 +1131,41 @@ jobs:
         run: test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
+
+      # Tool locks belong to the workflow commit. The release checkout stays at the tag.
+      - name: Check out pinned release tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: .router-ci-tools
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/install-ci-cargo-tool.sh
+            scripts/ci/cargo-tools/releases.tsv
+            scripts/ci/cargo-tools/rust-script/Cargo.lock
+          sparse-checkout-cone-mode: false
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash .router-ci-tools/scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           username: konard
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Download runtime digests
         # v8's bundled unzip chain (unzip-stream -> binary/buffers) still calls the
@@ -1133,7 +1178,7 @@ jobs:
         # what should stop a release.
         env:
           NODE_OPTIONS: --no-deprecation
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: runtime-*
           path: /tmp/digests/runtime
@@ -1279,12 +1324,25 @@ jobs:
           echo "v${RELEASE_VERSION} -> $commit" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
+
+      # Tool locks belong to the workflow commit. The release checkout stays at the tag.
+      - name: Check out pinned release tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: .router-ci-tools
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/install-ci-cargo-tool.sh
+            scripts/ci/cargo-tools/releases.tsv
+            scripts/ci/cargo-tools/rust-script/Cargo.lock
+          sparse-checkout-cone-mode: false
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash .router-ci-tools/scripts/install-ci-cargo-tool.sh rust-script
 
       # Surface orphan tags left by earlier runs *before* anything is published, so the
       # log names them while they can still be fixed without a half-finished release.
@@ -1369,15 +1427,29 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
           targets: ${{ matrix.target }}
 
       # Each job starts on a fresh runner: without this step the upload below
       # exits 127 and the release ships no binaries (issue #648, v1.15.0).
+      # Tool locks belong to the workflow commit. The release checkout stays at the tag.
+      - name: Check out pinned release tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: .router-ci-tools
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/install-ci-cargo-tool.sh
+            scripts/ci/cargo-tools/releases.tsv
+            scripts/ci/cargo-tools/rust-script/Cargo.lock
+            scripts/ci/cargo-tools/cargo-cyclonedx/Cargo.lock
+          sparse-checkout-cone-mode: false
+
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash .router-ci-tools/scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Verify tag and package version
         shell: bash
@@ -1391,7 +1463,7 @@ jobs:
         run: cargo build --locked --release --bins --target ${{ matrix.target }}
 
       - name: Install pinned CycloneDX generator
-        run: cargo install cargo-cyclonedx --version 0.5.9 --locked
+        run: bash .router-ci-tools/scripts/install-ci-cargo-tool.sh cargo-cyclonedx
 
       - name: Package binaries, checksums, and CycloneDX SBOM
         shell: bash
@@ -1495,15 +1567,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ needs.resolve-release-source.outputs.sha }}
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
-          toolchain: 1.98.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+          toolchain: 1.100.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: '24'
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+          node-version: '26.13.1'
+      - run: npm install --global npm@12.2.3 --ignore-scripts
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
-          python-version: '3.10'
+          python-version: '3.15.2'
       - name: Verify immutable release source and package versions
         run: |
           test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
@@ -1512,9 +1585,9 @@ jobs:
           python3 scripts/generate-bindings.py --check
       - run: npm ci && npm test && npm run typecheck
         working-directory: js
-      - run: python3 -m pip install -e packages/python build
-      - run: python3 -m unittest discover -s packages/python/tests -v
-      - run: python3 scripts/package-integrations.py --output dist-integrations
+      - run: python3 -m pip install uv==0.13.10
+      - run: uv run --project packages/python --python "$(command -v python3)" --locked python3 -m unittest discover -s packages/python/tests -v
+      - run: uv run --project packages/python --python "$(command -v python3)" --locked python3 scripts/package-integrations.py --output dist-integrations
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
         with:
           subject-path: dist-integrations/*
@@ -1545,28 +1618,28 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           username: konard
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       # Resolve the immutable tag before verifying its exact source identity.
       - name: Fetch the release tag
@@ -1598,7 +1671,7 @@ jobs:
       - name: Download architecture digests for strict attestation verification
         env:
           NODE_OPTIONS: --no-deprecation
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: runtime-*
           path: image-digests
@@ -1650,9 +1723,9 @@ jobs:
         run: test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Download and verify the published darwin-arm64 asset
         shell: bash
@@ -1730,12 +1803,12 @@ jobs:
         env:
           SOURCE_RUN: ${{ inputs.source_run }}
         run: python3 scripts/prepare-registry-retry.py --repository "${{ github.repository }}" --version "$RELEASE_VERSION" --source-run "$SOURCE_RUN" --output "$GITHUB_OUTPUT"
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
-      - uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
       - name: Reverify existing assets and image provenance without rebuilding
         env:
           RELEASE_COMMIT: ${{ steps.source.outputs.commit }}
@@ -1767,10 +1840,11 @@ jobs:
       RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit || needs.prepare-registry-retry.outputs.release-commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: '24'
+          node-version: '26.13.1'
           registry-url: https://registry.npmjs.org
+      - run: npm install --global npm@12.2.3 --ignore-scripts
       - name: Download and verify exact tagged package
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1812,9 +1886,9 @@ jobs:
       RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit || needs.prepare-registry-retry.outputs.release-commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
-          python-version: '3.10'
+          python-version: '3.15.2'
       - name: Download and verify exact tagged Python distributions
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1827,7 +1901,7 @@ jobs:
       - name: Check for already delivered identical Python distributions
         id: registry
         run: python3 scripts/registry-distributions.py python --version "$RELEASE_VERSION" --assets dist --probe >> "$GITHUB_OUTPUT"
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
         if: steps.registry.outputs.present != 'true'
         with:
           packages-dir: dist
@@ -1851,11 +1925,11 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
       # crates.io trusted publishing (issue #797): exchange the job's OIDC token
       # for a short-lived crates.io token. Both the normal release and the
       # retry-registries path publish through this job. The long-lived secrets
@@ -1897,12 +1971,12 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Install rust-script
-        run: cargo install rust-script --version 0.36.0 --locked
+        run: bash scripts/install-ci-cargo-tool.sh rust-script
 
       - name: Create changelog fragment
         env:
@@ -1911,7 +1985,7 @@ jobs:
         run: rust-script scripts/create-changelog-fragment.rs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore: add changelog for manual ${{ github.event.inputs.bump_type }} release'

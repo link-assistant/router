@@ -122,7 +122,7 @@ mod tests {
         first.scope(|| configure(settings()));
         second.scope(|| configure(LocalSettings::default()));
         first.scope(|| assert_eq!(current().env, settings().env));
-        second.scope(|| assert!(current().env.is_empty()));
+        second.scope(|| assert_eq!(current().env.len(), 0));
     }
 
     #[test]

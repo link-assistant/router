@@ -9,15 +9,50 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: npm
-    directory: /ui
+    directories:
+      - /js
+      - /ts
+      - /ui
+      - /scripts/ci
+      - /experiments/issue-781
     schedule:
       interval: weekly
     groups:
-      reviewed-ui-dependencies:
+      reviewed-npm-dependencies:
         patterns:
           - "*"
   - package-ecosystem: docker
     directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: cargo
+    directories:
+      - /rust/fuzz
+      - /experiments/issue-725/test-sharder
+    schedule:
+      interval: weekly
+  - package-ecosystem: uv
+    directory: /packages/python
+    schedule:
+      interval: weekly
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: nix
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /experiments/issue-697/http-clients
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /experiments/issue-697/http-clients
+    schedule:
+      interval: weekly
+  - package-ecosystem: composer
+    directory: /experiments/issue-697/http-clients
     schedule:
       interval: weekly
   - package-ecosystem: docker

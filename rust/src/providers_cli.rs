@@ -120,7 +120,6 @@ async fn remote_import_report(
     Ok(report)
 }
 
-#[must_use]
 pub async fn run(config: &Config, op: &ProviderOp) -> ExitCode {
     let store = match ProviderStore::open(&config.data_dir, &config.token_secret) {
         Ok(store) => store,
@@ -440,7 +439,6 @@ fn print_remote_table(records: &[crate::translation_core::Json]) {
 ///
 /// Split from [`run`] so the operations can be exercised without constructing
 /// a whole configuration around them.
-#[must_use]
 pub async fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
     warn_zai_policy(op);
     let client = match crate::upstream_client::build_upstream_client() {

@@ -649,12 +649,13 @@ fn qwen_has_no_extra_headers() {
         account_id: None,
         resource_url: None,
     };
-    assert!(
+    assert_eq!(
         subscription_headers(
             SubscriptionProvider::Qwen,
             &token,
-            CodexResponsesMode::Standard
+            CodexResponsesMode::Standard,
         )
-        .is_empty()
+        .len(),
+        0,
     );
 }

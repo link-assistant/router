@@ -2,6 +2,9 @@
 
 use super::*;
 
+#[path = "token_issuer_tests.rs"]
+mod issuer_tests;
+
 fn test_manager() -> TokenManager {
     TokenManager::new("test-secret-for-unit-tests")
 }
@@ -19,7 +22,7 @@ fn test_validate_valid_token() {
     let token = mgr.issue_token(24, "my-label").expect("should issue");
     let claims = mgr.validate_token(&token).expect("should validate");
     assert_eq!(claims.label, "my-label");
-    assert!(!claims.sub.is_empty());
+    assert_ne!(claims.sub, "");
 }
 
 #[test]
@@ -420,7 +423,7 @@ fn test_client_tokens_carry_no_scope() {
     let token = mgr.issue_token(1, "client").expect("should issue");
     let claims = mgr.validate_token(&token).expect("should validate");
     assert!(!claims.is_admin());
-    assert!(claims.scope.is_empty());
+    assert_eq!(claims.scope, "");
     assert!(matches!(
         mgr.validate_admin_token(&token),
         Err(TokenError::InsufficientScope)

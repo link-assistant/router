@@ -479,14 +479,13 @@ async fn configured_account_health_report(state: &AppState) -> Vec<(String, Prov
                             .subscription_readers
                             .iter()
                             .find(|reader| reader.provider() == provider)
-                            .map(|reader| {
+                            .map_or_default(|reader| {
                                 state.subscription_cache.register_reader(
                                     crate::credential_recovery_store::PRIMARY_ACCOUNT,
                                     reader,
                                 );
                                 vec![crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()]
                             })
-                            .unwrap_or_default()
                     },
                     |router| {
                         router

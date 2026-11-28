@@ -3,9 +3,15 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Nixpkgs stopped supporting Intel macOS after the 26.05 release.
+    nixpkgs-darwin-intel.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, nixpkgs-darwin-intel, rust-overlay }:
     let
       # The platforms Nix support is claimed for. Everything below is derived
       # per system so a single definition serves all of them.
@@ -16,29 +22,49 @@
         "aarch64-darwin"
       ];
 
+      intelMac = "x86_64-darwin";
+      isIntelMac = pkgs: pkgs.stdenv.hostPlatform.system == intelMac;
+
       forEachSystem = f:
-        nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+        nixpkgs.lib.genAttrs systems (system:
+          let
+            packages = if system == intelMac then nixpkgs-darwin-intel else nixpkgs;
+          in f (import packages {
+            inherit system;
+            overlays = [ rust-overlay.overlays.default ];
+          }));
 
       cargoToml = builtins.fromTOML (builtins.readFile ./rust/Cargo.toml);
+      rustToolchain = pkgs: pkgs.rust-bin.stable.${cargoToml.package.rust-version}.default.override {
+        extensions = [ "rust-src" ];
+      };
 
       # Only the inputs the Rust build actually reads. Keeping the source
       # filtered this way means editing docs or CI configuration does not
       # invalidate the build.
+      packageFiles = nixpkgs.lib.fileset.unions [
+        ./Cargo.toml
+        ./Cargo.lock
+        # View the crate's copy of the shared assets under ./rust.
+        ./rust
+        ./README.md
+      ];
       src = nixpkgs.lib.fileset.toSource {
         root = ./.;
+        fileset = packageFiles;
+      };
+      formatSrc = nixpkgs.lib.fileset.toSource {
+        root = ./.;
         fileset = nixpkgs.lib.fileset.unions [
-          ./Cargo.toml
-          ./Cargo.lock
-          ./rust
-          ./README.md
-          # RustEmbed compiles the committed admin UI bundle into the binary,
-          # so the build fails without it (see rust/src/admin_ui.rs).
+          packageFiles
+          # Cargo fmt follows the test crate's explicit paths to Rust fixtures.
+          (nixpkgs.lib.fileset.fileFilter (file: file.hasExt "rs") ./tools/translation)
         ];
       };
 
-      # `aws-lc-sys` (through rustls) builds C and generates bindings; `ring`,
-      # `zstd`, `brotli` and `flate2` need a C compiler. `openssl` is here for
-      # the crates that probe for it via pkg-config.
+      # The current Nixpkgs Cargo hook selects packaged AWS-LC and Zstandard.
+      # The Intel macOS channel still carries AWS-LC 1.x, so on that platform
+      # aws-lc-sys builds the compatible bundled library with CMake.
       nativeDeps = pkgs: {
         nativeBuildInputs = [
           pkgs.pkg-config
@@ -46,12 +72,15 @@
           pkgs.perl
           pkgs.rustPlatform.bindgenHook
         ];
-        buildInputs = [ pkgs.openssl ];
+        buildInputs = [ pkgs.zstd ] ++ pkgs.lib.optional (!isIntelMac pkgs) pkgs.aws-lc;
       };
 
       routerPackage = pkgs:
-        let deps = nativeDeps pkgs;
-        in pkgs.rustPlatform.buildRustPackage {
+        let
+          deps = nativeDeps pkgs;
+          toolchain = rustToolchain pkgs;
+          platform = pkgs.makeRustPlatform { cargo = toolchain; rustc = toolchain; };
+        in platform.buildRustPackage {
           pname = "link-assistant-router";
           inherit (cargoToml.package) version;
           inherit src;
@@ -59,6 +88,14 @@
           cargoLock.lockFile = ./Cargo.lock;
 
           inherit (deps) nativeBuildInputs buildInputs;
+          env = pkgs.lib.optionalAttrs (isIntelMac pkgs) {
+            AWS_LC_SYS_CMAKE_BUILDER = "1";
+            # The four-core Intel runner reached the job deadline compiling
+            # Router with full LTO and one codegen unit. Thin LTO and parallel
+            # codegen keep the native package build within the same budget.
+            CARGO_PROFILE_RELEASE_LTO = "thin";
+            CARGO_PROFILE_RELEASE_CODEGEN_UNITS = "16";
+          };
 
           # The test suite starts servers, binds ports and reaches out to real
           # Anthropic endpoints, none of which work in the Nix sandbox. Tests
@@ -67,7 +104,8 @@
           doCheck = false;
 
           meta = with pkgs.lib; {
-            inherit (cargoToml.package) description homepage;
+            inherit (cargoToml.package) description;
+            homepage = cargoToml.package.repository;
             license = licenses.unlicense;
             mainProgram = "router";
             platforms = systems;
@@ -95,25 +133,21 @@
       });
 
       devShells = forEachSystem (pkgs:
-        let deps = nativeDeps pkgs;
+        let
+          deps = nativeDeps pkgs;
+          toolchain = rustToolchain pkgs;
         in {
           default = pkgs.mkShell {
             nativeBuildInputs = deps.nativeBuildInputs ++ [
-              # `cargo build`, `cargo test`, `cargo fmt` and `cargo clippy` all
-              # come from this one toolchain, which nixpkgs keeps at or above
-              # the project's MSRV (Cargo.toml `rust-version`).
-              pkgs.cargo
-              pkgs.rustc
-              pkgs.rustfmt
-              pkgs.clippy
+              toolchain
               pkgs.rust-analyzer
               # The admin UI bundle in ui/dist is rebuilt with these.
-              pkgs.nodejs
+              pkgs.nodejs_26
               pkgs.git
             ];
             inherit (deps) buildInputs;
 
-            RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+            RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
 
             shellHook = ''
               echo "Router dev shell — rustc $(rustc --version | cut -d' ' -f2) (MSRV ${cargoToml.package.rust-version})"
@@ -132,14 +166,14 @@
           # flake does not fork the CI configuration.
           fmt = pkgs.runCommand "check-cargo-fmt"
             {
-              nativeBuildInputs = [ pkgs.cargo pkgs.rustfmt ];
+              nativeBuildInputs = [ (rustToolchain pkgs) ];
             } ''
-            cd ${src}
+            cd ${formatSrc}
             cargo fmt --all --check
             touch $out
           '';
         });
 
-      formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
+      formatter = forEachSystem (pkgs: pkgs.nixfmt);
     };
 }

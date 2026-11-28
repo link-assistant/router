@@ -171,7 +171,7 @@ fn stores_persist_the_admin_scope() {
         text.get("admin").unwrap().unwrap().scope,
         crate::token::ADMIN_SCOPE
     );
-    assert!(text.get("client").unwrap().unwrap().scope.is_empty());
+    assert_eq!(text.get("client").unwrap().unwrap().scope, "");
 
     let bin_path = dir.path().join("tokens.bin");
     let bin = BinaryTokenStore::open(&bin_path).unwrap();
@@ -484,19 +484,20 @@ fn a_record_without_the_field_loads_as_unrestricted() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = build_token_store(StoragePolicy::Text, directory.path()).expect("open the store");
     let record = sample_record("legacy");
-    assert!(record.github_repos.is_empty());
+    assert_eq!(record.github_repos.len(), 0);
     store.put(record).expect("persist");
 
     let reopened =
         build_token_store(StoragePolicy::Text, directory.path()).expect("reopen the store");
 
-    assert!(
+    assert_eq!(
         reopened
             .get("legacy")
             .expect("read")
             .expect("present")
             .github_repos
-            .is_empty()
+            .len(),
+        0,
     );
 }
 
@@ -873,7 +874,7 @@ fn an_empty_store_file_is_not_mistaken_for_a_legacy_one() {
 
     // And it opens as an empty store rather than failing to decode.
     let store = BinaryTokenStore::open(&path).expect("open over the empty file");
-    assert!(store.list().expect("list").is_empty());
+    assert_eq!(store.list().expect("list").len(), 0);
 }
 
 /// The store never holds two links with the same `(source, target)`.

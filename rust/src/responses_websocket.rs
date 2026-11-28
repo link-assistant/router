@@ -29,7 +29,7 @@ mod thinking_controls;
 const RESPONSES_PATH: &str = "/v1/responses";
 const MAX_NAMED_STREAMS: usize = 32;
 const MAX_STREAM_ID_CHARS: usize = 256;
-const MAX_CONNECTION_AGE: Duration = Duration::from_secs(60 * 60);
+const MAX_CONNECTION_AGE: Duration = Duration::from_hours(1);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

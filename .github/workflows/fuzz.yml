@@ -31,6 +31,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  ROUTER_RUST_NIGHTLY: nightly-2026-11-26
 
 jobs:
   javascript:
@@ -56,19 +57,19 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       # cargo-fuzz's locked dependencies do not build on nightly, so install
       # it with the pinned stable toolchain; only the fuzz build needs nightly.
       - name: Install cargo-fuzz
-        run: cargo +1.98.1 install cargo-fuzz --version 0.13.1 --locked
+        run: RUSTUP_TOOLCHAIN=1.100.1 bash scripts/install-ci-cargo-tool.sh cargo-fuzz
 
       - name: Setup Rust nightly
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: nightly
+          toolchain: ${{ env.ROUTER_RUST_NIGHTLY }}
 
       - name: Run ${{ matrix.target }}
         working-directory: rust
@@ -77,14 +78,14 @@ jobs:
         run: |
           # -rss_limit_mb and -max_len bound memory per input; a run that
           # exceeds them counts as a failure (unbounded allocation).
-          cargo +nightly fuzz run ${{ matrix.target }} \
+          cargo "+$ROUTER_RUST_NIGHTLY" fuzz run ${{ matrix.target }} \
             fuzz/corpus/${{ matrix.target }} -- \
             -max_total_time="$SECONDS_PER_TARGET" -rss_limit_mb=2048 -max_len=65536 \
             -timeout=10
 
       - name: Upload crash reproducers
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fuzz-artifacts-${{ matrix.target }}
           path: rust/fuzz/artifacts/
