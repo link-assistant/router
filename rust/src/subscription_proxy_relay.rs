@@ -246,7 +246,7 @@ pub(super) async fn relay(
     if native_protocol {
         let body = if let Some(limit) = emulated_output_limit.filter(|_| status.is_success()) {
             let collapsed = codex_sse_to_response_json(&upstream_body);
-            let body = collapsed.as_deref().unwrap_or(upstream_body.as_ref());
+            let body = collapsed.as_deref().unwrap_or(&upstream_body);
             let Ok(mut body) = serde_json::from_slice::<serde_json::Value>(body) else {
                 return error_response(
                     StatusCode::BAD_GATEWAY,

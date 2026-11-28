@@ -15,9 +15,9 @@ use super::{ROOT, call, issue, state};
 #[tokio::test]
 async fn configuration_writers_cannot_change_host_authority() {
     let root = tempfile::tempdir().unwrap();
-    let path = root.path().join("runtime.toml");
+    let config_file = root.path().join("runtime.toml");
     let original = "[cli]\nport = 9084\n";
-    std::fs::write(&path, original).unwrap();
+    std::fs::write(&config_file, original).unwrap();
     let state = state(root.path());
     let app = crate::admin_api::router(state.clone());
     let writer = issue(&state, CONFIG_WRITE_SCOPE);
@@ -47,7 +47,7 @@ async fn configuration_writers_cannot_change_host_authority() {
             );
         }
     }
-    assert_eq!(std::fs::read_to_string(path).unwrap(), original);
+    assert_eq!(std::fs::read_to_string(config_file).unwrap(), original);
     assert!(!root.path().join("runtime-config-audit.jsonl").exists());
 }
 

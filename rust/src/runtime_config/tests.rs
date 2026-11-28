@@ -551,11 +551,13 @@ async fn native_codex_request_records_scoped_rules_and_enforces_the_output_cap()
             assert!(applied.is_none());
         }
     }
-    let captured = captured.lock().unwrap();
-    assert_eq!(captured.len(), 2);
-    assert_eq!(captured[0]["temperature"], 0.1);
-    assert!(captured[0].get("max_output_tokens").is_none());
-    assert!(captured[1].get("temperature").is_none());
+    {
+        let captured = captured.lock().unwrap();
+        assert_eq!(captured.len(), 2);
+        assert_eq!(captured[0]["temperature"], 0.1);
+        assert!(captured[0].get("max_output_tokens").is_none());
+        assert!(captured[1].get("temperature").is_none());
+    }
     server.abort();
 }
 
