@@ -20,8 +20,12 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.request
+
+
+PYPI_PROPAGATION_SECONDS = 180
 
 
 def fetch(url):
@@ -32,11 +36,31 @@ def fetch(url):
 
 def metadata(url):
     try:
-        return json.loads(fetch(url))
+        record = json.loads(fetch(url))
     except urllib.error.HTTPError as error:
         if error.code == 404:
+            error.close()
             return None
         raise
+    if record is None:
+        raise ValueError(f"registry returned null metadata: {url}")
+    return record
+
+
+def wait_for_pypi_metadata(url):
+    """Retry exact-version 404s through the end of the propagation window."""
+    deadline = time.monotonic() + PYPI_PROPAGATION_SECONDS
+    delay = 2
+    while True:
+        record = metadata(url)
+        if record is not None:
+            return record
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise ValueError(f"PyPI exact-version metadata is still absent after waiting "
+                             f"{PYPI_PROPAGATION_SECONDS} seconds: {url}")
+        time.sleep(min(delay, remaining))
+        delay = min(delay * 2, 30)
 
 
 NPM_PACKAGE_URL = "https://registry.npmjs.org/@link-assistant%2frouter"
@@ -182,7 +206,8 @@ def main():
     if args.kind == "npm":
         exists = npm_identity(args.version, args.assets / f"link-assistant-router-{args.version}.tgz")
     else:
-        exists = python_identity(args.version, python_distribution_assets(args.assets, args.version))
+        load = metadata if args.probe else wait_for_pypi_metadata
+        exists = python_identity(args.version, python_distribution_assets(args.assets, args.version), load=load)
     if args.probe:
         print("present=true" if exists else "present=false")
     elif not exists:

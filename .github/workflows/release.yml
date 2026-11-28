@@ -1903,7 +1903,7 @@ jobs:
         if: steps.registry.outputs.present != 'true'
         with:
           packages-dir: dist
-      - name: Verify PyPI hashes and ordinary exact-version install
+      - name: Wait for PyPI metadata and verify hashes and exact-version install
         run: python3 scripts/registry-distributions.py python --version "$RELEASE_VERSION" --assets dist
 
   finalize-release:

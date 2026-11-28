@@ -223,6 +223,12 @@ The 22:18 UTC registry refresh on 2026-11-27 queried 863 npm, Cargo and PyPI met
 
 The 22:26 UTC supplement queried 897 additional dependency coordinates. Composer 2.11.3 selected Symfony 8.1.13 for Filesystem, Finder, Stopwatch and String. Strict manifest validation, locked installation, the Packagist advisory audit and linting the generated PHP client passed. The generated Go, Java and PHP probes passed against Router 1.25.6. The CycloneDX tool lock selects the checksum-verified `spdx` 0.13.7 release with the same dependency requirements and a Rust 1.95 minimum. OSV reported zero findings across the 164 locked packages for that tool. [Symfony 8.1.13](https://github.com/symfony/symfony/releases/tag/v8.1.13), [SPDX 0.13.7](https://github.com/EmbarkStudios/spdx/releases/tag/0.13.7).
 
+### Repaired default branch
+
+GitHub merged PR #813 into `main` at `efb1bb89034fbb06ea09bdc4e87b4f61d90f9f22` after checkpoint `e98fa2731` was published. That merge repairs the JWT and terminal compilation errors on the former benchmark base. The new candidate integrates the repaired commit, retains the pull request's dependency pins and matching admin assets, and uses the merged `router verify` CLI in all three real-client jobs. It preserves the shared SSH fixture across all three test targets, retains the empty-secret regression in the issuer test suite, and keeps the exact base SHA for performance comparisons. The PyPI propagation change and its regressions are also included. [Merged PR](https://github.com/link-assistant/router/pull/813), [new benchmark base](https://github.com/link-assistant/router/commit/efb1bb89034fbb06ea09bdc4e87b4f61d90f9f22).
+
+The resolved source passed all ten manual workflow policy cases, the workflow policy auditor, the Rust asset mirror check across 78 files, all twelve mocked publication retry tests, and the shared SSH fixture syntax and behavioral checks. Hosted benchmark, release, and compatibility jobs will verify the new candidate and base.
+
 ## Cargo tool advisories
 
 The published archives for seven Cargo tools were downloaded from crates.io and matched to the registry SHA-256. OSV scanned the bundled locks before any changes. Each original installed version, latest registry version, upstream dependency constraint and advisory identifier is in the inventory. Advisory counts can include aliases and optional or development dependencies. [Published inventory A](cargo-tools-published-a.tsv), [published inventory B](cargo-tools-published-b.tsv).
