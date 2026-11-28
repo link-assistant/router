@@ -106,7 +106,7 @@ impl Default for LoginConfig {
             codex_home: PathBuf::from("/data/codex"),
             codex_issuer: crate::auth::CODEX_ISSUER.to_string(),
             codex_callback_port: 1455,
-            session_ttl: Duration::from_secs(900),
+            session_ttl: Duration::from_mins(15),
             max_sessions: 4,
             idle_settle: Duration::from_millis(750),
             url_timeout: Duration::from_secs(60),

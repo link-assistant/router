@@ -26,7 +26,7 @@ fn let_chains_preserve_binding_and_short_circuit_order() {
     {
         panic!("missing value reached the body");
     }
-    assert!(trace.is_empty());
+    assert_eq!(trace.len(), 0);
     if record(&mut trace, "stopped", false)
         && let Some(_) = input
     {

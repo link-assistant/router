@@ -133,7 +133,7 @@ fn stream_rewriter_stops_the_stream_once_the_cap_is_exhausted() {
     assert!(out.contains("\"type\":\"response.incomplete\""));
     assert!(out.contains("\"reason\":\"max_output_tokens\""));
     assert!(out.ends_with("data: [DONE]\n\n"));
-    assert!(rewriter.push(b"event: x\ndata: {}\n\n").is_empty());
+    assert_eq!(rewriter.push(b"event: x\ndata: {}\n\n"), "");
 }
 
 #[test]
@@ -186,30 +186,32 @@ fn translated_stream_withholds_identity_free_preamble() {
 fn translated_stream_eof_without_identity_is_a_typed_error() {
     let policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
     let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
-    assert!(
+    assert_eq!(
         rewriter
             .push(
                 b"event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"r\"}}\n\n",
             )
-            .is_empty()
+            .len(),
+        0,
     );
 
     let out = rewriter.finish();
     assert!(out.contains("served_model_unknown"), "{out}");
     assert!(out.ends_with("data: [DONE]\n\n"), "{out}");
-    assert!(rewriter.finish().is_empty());
+    assert_eq!(rewriter.finish(), "");
 }
 
 #[test]
 fn translated_stream_processes_a_final_identity_event_without_blank_line() {
     let policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
     let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
-    assert!(
+    assert_eq!(
         rewriter
             .push(
                 b"event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"r\",\"model\":\"model-a\"}}",
             )
-            .is_empty()
+            .len(),
+        0,
     );
 
     let out = rewriter.finish();
@@ -227,7 +229,7 @@ fn translated_stream_preserves_upstream_failure_without_identity_error() {
     );
     assert!(out.contains("provider_error"), "{out}");
     assert!(!out.contains("served_model_unknown"), "{out}");
-    assert!(rewriter.finish().is_empty());
+    assert_eq!(rewriter.finish(), "");
 }
 
 #[test]
@@ -238,7 +240,7 @@ fn translated_stream_preserves_provider_error_objects_without_identity() {
         rewriter.push(b"data: {\"error\":{\"code\":429,\"message\":\"provider overloaded\"}}\n\n");
     assert!(out.contains("provider overloaded"), "{out}");
     assert!(!out.contains("served_model_unknown"), "{out}");
-    assert!(rewriter.finish().is_empty());
+    assert_eq!(rewriter.finish(), "");
 }
 
 #[test]

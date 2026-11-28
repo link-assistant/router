@@ -1,0 +1,308 @@
+stage	source-package	installed-version	advisory	debian-urgency	debian-13-fixed-version
+builder	acl	2.3.2-2+b1	DEBIAN-CVE-2026-54369	not yet assigned	no fixed version published
+builder	acl	2.3.2-2+b1	DEBIAN-CVE-2026-54370	not yet assigned	no fixed version published
+builder	apt	3.0.4	DEBIAN-CVE-2011-3374	unimportant	no fixed version published
+builder	attr	1:2.5.2-3	DEBIAN-CVE-2026-54371	not yet assigned	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2017-13716	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2018-20673	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2018-20712	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2018-9996	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2021-32256	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11081	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11082	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11083	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11412	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11413	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11414	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1147	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1148	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1149	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11494	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11495	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1150	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1151	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1152	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1153	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1176	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1178	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1180	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1181	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-1182	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11839	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-11840	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-3198	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-5244	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-5245	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-66861	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-66862	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-66863	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-66864	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-66865	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-66866	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-69644	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-69645	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-69646	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-69647	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-69648	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-69649	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-69650	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-69651	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-69652	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-7545	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-7546	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2025-8225	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-15003	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-18220	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-19548	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-3441	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-3442	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-4647	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-6844	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-6845	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-6846	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-90801	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-90802	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-90803	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-90804	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-90828	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-90829	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-90830	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-90831	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-91779	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-91780	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-91781	unimportant	no fixed version published
+builder	binutils	2.44-3	DEBIAN-CVE-2026-91782	unimportant	no fixed version published
+builder	bzip2	1.0.8-6	DEBIAN-CVE-2026-42250	not yet assigned	no fixed version published
+builder	coreutils	9.7-3	DEBIAN-CVE-2017-18018	unimportant	no fixed version published
+builder	coreutils	9.7-3	DEBIAN-CVE-2025-5278	unimportant	no fixed version published
+builder	coreutils	9.7-3	DEBIAN-CVE-2026-56391	unimportant	no fixed version published
+builder	coreutils	9.7-3	DEBIAN-CVE-2026-56392	unimportant	no fixed version published
+builder	dash	0.5.12-12	DEBIAN-CVE-2026-102473	unimportant	no fixed version published
+builder	dash	0.5.12-12	DEBIAN-CVE-2026-102474	unimportant	no fixed version published
+builder	diffutils	1:3.10-4	DEBIAN-CVE-2026-53910	unimportant	no fixed version published
+builder	dpkg	1.22.22	DEBIAN-CVE-2026-91094	not yet assigned	no fixed version published
+builder	expat	2.9.0-1~deb13u1	DEBIAN-CVE-2025-66382	not yet assigned	no fixed version published
+builder	expat	2.9.0-1~deb13u1	DEBIAN-CVE-2026-113351	not yet assigned	no fixed version published
+builder	expat	2.9.0-1~deb13u1	DEBIAN-CVE-2026-115506	not yet assigned	no fixed version published
+builder	expat	2.9.0-1~deb13u1	DEBIAN-CVE-2026-117610	not yet assigned	no fixed version published
+builder	expat	2.9.0-1~deb13u1	DEBIAN-CVE-2026-118370	not yet assigned	no fixed version published
+builder	expat	2.9.0-1~deb13u1	DEBIAN-CVE-2026-124317	not yet assigned	no fixed version published
+builder	expat	2.9.0-1~deb13u1	DEBIAN-CVE-2026-128241	not yet assigned	no fixed version published
+builder	expat	2.9.0-1~deb13u1	DEBIAN-CVE-2026-134703	not yet assigned	no fixed version published
+builder	gcc-14	14.2.0-19	DEBIAN-CVE-2026-102010	not yet assigned	no fixed version published
+builder	gcc-14	14.2.0-19	DEBIAN-CVE-2026-114690	not yet assigned	no fixed version published
+builder	gcc-14	14.2.0-19	DEBIAN-CVE-2026-114691	not yet assigned	no fixed version published
+builder	gcc-14	14.2.0-19	DEBIAN-CVE-2026-115455	not yet assigned	no fixed version published
+builder	gcc-14	14.2.0-19	DEBIAN-CVE-2026-115456	not yet assigned	no fixed version published
+builder	gcc-14	14.2.0-19	DEBIAN-CVE-2026-125709	not yet assigned	no fixed version published
+builder	gcc-14	14.2.0-19	DEBIAN-CVE-2026-95619	not yet assigned	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2010-4756	unimportant	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2018-20796	unimportant	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-1010022	unimportant	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-1010023	unimportant	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-1010024	unimportant	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-1010025	unimportant	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-9192	unimportant	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-100290	not yet assigned	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-115819	not yet assigned	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-121757	not yet assigned	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-121758	not yet assigned	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-124024	not yet assigned	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-126765	not yet assigned	no fixed version published
+builder	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-84243	not yet assigned	no fixed version published
+builder	ncurses	6.5+20250216-2	DEBIAN-CVE-2025-6141	not yet assigned	no fixed version published
+builder	ncurses	6.5+20250216-2	DEBIAN-CVE-2025-69720	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-107493	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-107494	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-107496	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-121481	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-121482	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-124709	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-35190	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-84785	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-84786	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-88822	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-88823	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-95690	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-95691	not yet assigned	no fixed version published
+builder	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-95692	not yet assigned	no fixed version published
+builder	pam	1.7.0-5	DEBIAN-CVE-2025-8941	not yet assigned	no fixed version published
+builder	pam	1.7.0-5	DEBIAN-CVE-2026-54411	not yet assigned	no fixed version published
+builder	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2011-4116	unimportant	no fixed version published
+builder	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2026-15534	not yet assigned	no fixed version published
+builder	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2026-40558	not yet assigned	no fixed version published
+builder	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2026-82560	not yet assigned	no fixed version published
+builder	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2026-9538	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2025-12781	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2025-15366	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2025-15367	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-103995	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-114583	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-115557	unimportant	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-115559	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-115791	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-116566	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-12003	unimportant	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-12345	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-124249	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-15308	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-15310	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-15806	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-16052	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-17084	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-18503	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-19445	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-19552	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-19553	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-19672	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-3479	unimportant	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-7210	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-82049	not yet assigned	no fixed version published
+builder	python3.13	3.13.5-2+deb13u5	DEBIAN-CVE-2026-87910	not yet assigned	no fixed version published
+builder	shadow	1:4.17.4-2+deb13u1	DEBIAN-CVE-2007-5686	unimportant	no fixed version published
+builder	shadow	1:4.17.4-2+deb13u1	DEBIAN-CVE-2024-56433	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2021-45346	unimportant	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2025-70873	unimportant	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119371	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119372	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119373	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119374	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119375	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119376	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119377	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119378	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119379	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119586	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119591	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-50812	not yet assigned	no fixed version published
+builder	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-50813	not yet assigned	no fixed version published
+builder	systemd	257.13-1~deb13u1	DEBIAN-CVE-2013-4392	unimportant	no fixed version published
+builder	systemd	257.13-1~deb13u1	DEBIAN-CVE-2023-31437	unimportant	no fixed version published
+builder	systemd	257.13-1~deb13u1	DEBIAN-CVE-2023-31438	unimportant	no fixed version published
+builder	systemd	257.13-1~deb13u1	DEBIAN-CVE-2023-31439	unimportant	no fixed version published
+builder	systemd	257.13-1~deb13u1	DEBIAN-CVE-2026-15059	not yet assigned	no fixed version published
+builder	systemd	257.13-1~deb13u1	DEBIAN-CVE-2026-16742	not yet assigned	no fixed version published
+builder	tar	1.35+dfsg-3.1	DEBIAN-CVE-2005-2541	unimportant	no fixed version published
+builder	tar	1.35+dfsg-3.1	DEBIAN-CVE-2026-18477	not yet assigned	no fixed version published
+builder	tar	1.35+dfsg-3.1	DEBIAN-CVE-2026-18508	not yet assigned	no fixed version published
+builder	tar	1.35+dfsg-3.1	DEBIAN-CVE-2026-5704	not yet assigned	no fixed version published
+builder	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2022-0563	unimportant	no fixed version published
+builder	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-3184	not yet assigned	no fixed version published
+builder	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-76642	not yet assigned	no fixed version published
+builder	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-78408	not yet assigned	no fixed version published
+builder	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-78409	not yet assigned	no fixed version published
+builder	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-78410	not yet assigned	no fixed version published
+builder	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2022-0563	unimportant	no fixed version published
+builder	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-3184	not yet assigned	no fixed version published
+builder	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-76642	not yet assigned	no fixed version published
+builder	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-78408	not yet assigned	no fixed version published
+builder	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-78409	not yet assigned	no fixed version published
+builder	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-78410	not yet assigned	no fixed version published
+builder	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2022-0563	unimportant	no fixed version published
+builder	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-3184	not yet assigned	no fixed version published
+builder	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-76642	not yet assigned	no fixed version published
+builder	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-78408	not yet assigned	no fixed version published
+builder	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-78409	not yet assigned	no fixed version published
+builder	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-78410	not yet assigned	no fixed version published
+runtime	acl	2.3.2-2+b1	DEBIAN-CVE-2026-54369	not yet assigned	no fixed version published
+runtime	acl	2.3.2-2+b1	DEBIAN-CVE-2026-54370	not yet assigned	no fixed version published
+runtime	apt	3.0.4	DEBIAN-CVE-2011-3374	unimportant	no fixed version published
+runtime	attr	1:2.5.2-3	DEBIAN-CVE-2026-54371	not yet assigned	no fixed version published
+runtime	bzip2	1.0.8-6	DEBIAN-CVE-2026-42250	not yet assigned	no fixed version published
+runtime	coreutils	9.7-3	DEBIAN-CVE-2017-18018	unimportant	no fixed version published
+runtime	coreutils	9.7-3	DEBIAN-CVE-2025-5278	unimportant	no fixed version published
+runtime	coreutils	9.7-3	DEBIAN-CVE-2026-56391	unimportant	no fixed version published
+runtime	coreutils	9.7-3	DEBIAN-CVE-2026-56392	unimportant	no fixed version published
+runtime	dash	0.5.12-12	DEBIAN-CVE-2026-102473	unimportant	no fixed version published
+runtime	dash	0.5.12-12	DEBIAN-CVE-2026-102474	unimportant	no fixed version published
+runtime	diffutils	1:3.10-4	DEBIAN-CVE-2026-53910	unimportant	no fixed version published
+runtime	dpkg	1.22.22	DEBIAN-CVE-2026-91094	not yet assigned	no fixed version published
+runtime	gcc-14	14.2.0-19	DEBIAN-CVE-2026-102010	not yet assigned	no fixed version published
+runtime	gcc-14	14.2.0-19	DEBIAN-CVE-2026-114690	not yet assigned	no fixed version published
+runtime	gcc-14	14.2.0-19	DEBIAN-CVE-2026-114691	not yet assigned	no fixed version published
+runtime	gcc-14	14.2.0-19	DEBIAN-CVE-2026-115455	not yet assigned	no fixed version published
+runtime	gcc-14	14.2.0-19	DEBIAN-CVE-2026-115456	not yet assigned	no fixed version published
+runtime	gcc-14	14.2.0-19	DEBIAN-CVE-2026-125709	not yet assigned	no fixed version published
+runtime	gcc-14	14.2.0-19	DEBIAN-CVE-2026-95619	not yet assigned	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2010-4756	unimportant	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2018-20796	unimportant	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-1010022	unimportant	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-1010023	unimportant	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-1010024	unimportant	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-1010025	unimportant	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2019-9192	unimportant	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-100290	not yet assigned	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-115819	not yet assigned	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-121757	not yet assigned	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-121758	not yet assigned	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-124024	not yet assigned	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-126765	not yet assigned	no fixed version published
+runtime	glibc	2.41-12+deb13u5	DEBIAN-CVE-2026-84243	not yet assigned	no fixed version published
+runtime	ncurses	6.5+20250216-2	DEBIAN-CVE-2025-6141	not yet assigned	no fixed version published
+runtime	ncurses	6.5+20250216-2	DEBIAN-CVE-2025-69720	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-107493	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-107494	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-107496	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-121481	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-121482	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-124709	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-35190	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-84785	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-84786	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-88822	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-88823	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-95690	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-95691	not yet assigned	no fixed version published
+runtime	openssl	3.5.9-1~deb13u1	DEBIAN-CVE-2026-95692	not yet assigned	no fixed version published
+runtime	pam	1.7.0-5	DEBIAN-CVE-2025-8941	not yet assigned	no fixed version published
+runtime	pam	1.7.0-5	DEBIAN-CVE-2026-54411	not yet assigned	no fixed version published
+runtime	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2011-4116	unimportant	no fixed version published
+runtime	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2026-15534	not yet assigned	no fixed version published
+runtime	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2026-40558	not yet assigned	no fixed version published
+runtime	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2026-82560	not yet assigned	no fixed version published
+runtime	perl	5.40.1-6+deb13u1	DEBIAN-CVE-2026-9538	not yet assigned	no fixed version published
+runtime	shadow	1:4.17.4-2+deb13u1	DEBIAN-CVE-2007-5686	unimportant	no fixed version published
+runtime	shadow	1:4.17.4-2+deb13u1	DEBIAN-CVE-2024-56433	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2021-45346	unimportant	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2025-70873	unimportant	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119371	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119372	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119373	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119374	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119375	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119376	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119377	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119378	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119379	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119586	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-119591	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-50812	not yet assigned	no fixed version published
+runtime	sqlite3	3.46.1-7+deb13u2	DEBIAN-CVE-2026-50813	not yet assigned	no fixed version published
+runtime	systemd	257.13-1~deb13u1	DEBIAN-CVE-2013-4392	unimportant	no fixed version published
+runtime	systemd	257.13-1~deb13u1	DEBIAN-CVE-2023-31437	unimportant	no fixed version published
+runtime	systemd	257.13-1~deb13u1	DEBIAN-CVE-2023-31438	unimportant	no fixed version published
+runtime	systemd	257.13-1~deb13u1	DEBIAN-CVE-2023-31439	unimportant	no fixed version published
+runtime	systemd	257.13-1~deb13u1	DEBIAN-CVE-2026-15059	not yet assigned	no fixed version published
+runtime	systemd	257.13-1~deb13u1	DEBIAN-CVE-2026-16742	not yet assigned	no fixed version published
+runtime	tar	1.35+dfsg-3.1	DEBIAN-CVE-2005-2541	unimportant	no fixed version published
+runtime	tar	1.35+dfsg-3.1	DEBIAN-CVE-2026-18477	not yet assigned	no fixed version published
+runtime	tar	1.35+dfsg-3.1	DEBIAN-CVE-2026-18508	not yet assigned	no fixed version published
+runtime	tar	1.35+dfsg-3.1	DEBIAN-CVE-2026-5704	not yet assigned	no fixed version published
+runtime	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2022-0563	unimportant	no fixed version published
+runtime	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-3184	not yet assigned	no fixed version published
+runtime	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-76642	not yet assigned	no fixed version published
+runtime	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-78408	not yet assigned	no fixed version published
+runtime	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-78409	not yet assigned	no fixed version published
+runtime	util-linux	1:2.41.5-0+deb13u1	DEBIAN-CVE-2026-78410	not yet assigned	no fixed version published
+runtime	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2022-0563	unimportant	no fixed version published
+runtime	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-3184	not yet assigned	no fixed version published
+runtime	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-76642	not yet assigned	no fixed version published
+runtime	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-78408	not yet assigned	no fixed version published
+runtime	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-78409	not yet assigned	no fixed version published
+runtime	util-linux	1:4.16.0-2+really2.41.5-0+deb13u1	DEBIAN-CVE-2026-78410	not yet assigned	no fixed version published
+runtime	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2022-0563	unimportant	no fixed version published
+runtime	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-3184	not yet assigned	no fixed version published
+runtime	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-76642	not yet assigned	no fixed version published
+runtime	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-78408	not yet assigned	no fixed version published
+runtime	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-78409	not yet assigned	no fixed version published
+runtime	util-linux	2.41.5-0+deb13u1	DEBIAN-CVE-2026-78410	not yet assigned	no fixed version published

@@ -78,14 +78,16 @@ export function manualJobs() {
     'timeout-minutes': id === 'typescript' ? 25 : 15,
     steps: [
       { uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1', with: { ref: '${{ inputs.sha }}' } },
-      { uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020', with: { 'node-version': '20' } },
-      ...(['lint', 'bun-tests', 'typescript'].includes(id) ? [{ uses: 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6', with: { 'bun-version': '1.4.3' } }] : []),
+      // The native compiler guards require Node's named isProxy binding.
+      { uses: 'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1', with: { 'node-version': id === 'typescript' ? '20.20.2' : '26.13.1' } },
+      ...(['lint', 'bun-tests', 'typescript'].includes(id) ? [{ uses: 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6', with: { 'bun-version': '1.4.5' } }] : []),
       { name: 'Verify immutable source commit', env: { EXPECTED_SHA: '${{ inputs.sha }}' }, run: SHA_VERIFIER },
+      { run: `npm install --global npm@${id === 'typescript' ? '11.21.3' : '12.2.3'} --ignore-scripts` },
       ...[...INSTALLS[id], ...commands].map(run => (LANE_FILES[run] ? { if: laneFileCondition(LANE_FILES[run]), run } : { run })),
       ...(id === 'typescript' ? [{
         name: 'Preserve complete Node deadline audit and raw streams',
         if: '${{ always() }}',
-        uses: 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
+        uses: 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9',
         with: { name: 'node-case-deadlines-${{ github.job }}-${{ inputs.sha }}',
           path: 'js/node_modules/.node-case-deadlines/', 'include-hidden-files': true,
           'if-no-files-found': 'error', 'retention-days': 7 },

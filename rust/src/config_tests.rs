@@ -396,14 +396,14 @@ fn the_bridge_model_policy_is_configurable_and_validated() {
 #[test]
 fn csv_parsing_trims_and_drops_blank_entries() {
     assert_eq!(parse_csv("a, b ,,c"), vec!["a", "b", "c"]);
-    assert!(parse_csv("").is_empty());
-    assert!(parse_csv("  ,  ").is_empty());
+    assert_eq!(parse_csv("").len(), 0);
+    assert_eq!(parse_csv("  ,  ").len(), 0);
 }
 
 #[test]
 fn usize_csv_parsing_rejects_non_numeric_entries() {
     assert_eq!(parse_usize_csv("1, 2,3").expect("numbers"), vec![1, 2, 3]);
-    assert!(parse_usize_csv("").expect("empty").is_empty());
+    assert_eq!(parse_usize_csv("").expect("empty").len(), 0);
     assert!(parse_usize_csv("1,not-a-number").is_err());
 }
 

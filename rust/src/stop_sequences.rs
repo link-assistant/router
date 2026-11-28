@@ -121,7 +121,7 @@ mod tests {
             (String::new(), Some("<END>".into()))
         );
         assert_eq!(filter.push("more"), (String::new(), None));
-        assert!(filter.finish().is_empty());
+        assert_eq!(filter.finish(), "");
     }
 
     #[test]
@@ -131,7 +131,7 @@ mod tests {
         assert_eq!(visible, "回答は");
         assert!(matched.is_none());
         let (visible, matched) = filter.push("わり後");
-        assert!(visible.is_empty());
+        assert_eq!(visible, "");
         assert_eq!(matched.as_deref(), Some("終わり"));
     }
 }

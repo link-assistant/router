@@ -35,8 +35,8 @@ fn owned_text_operations_match_independent_standard_vec_results() {
         core::vec_text_truncate(appended.clone(), 2),
         vec![String::new(), String::from("changed")]
     );
-    assert!(core::vec_text_truncate(appended, 0).is_empty());
-    assert!(core::vec_text_new().is_empty());
+    assert_eq!(core::vec_text_truncate(appended, 0).len(), 0);
+    assert_eq!(core::vec_text_new().len(), 0);
 }
 
 #[test]

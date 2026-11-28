@@ -275,7 +275,7 @@ async fn every_deployment_facade_preserves_status_and_refusals_without_spawning(
             &serde_json::to_value(&error.result).unwrap(),
         )
         .unwrap();
-        assert!(!error.to_string().is_empty());
+        assert_ne!(error.to_string(), "");
     }
 }
 

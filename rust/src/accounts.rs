@@ -82,7 +82,7 @@ impl Default for AccountRouterOptions {
             strategy: SelectionStrategy::default(),
             cooldown: Duration::from_secs(60),
             max_cooldown: crate::account_limits::MAX_VENDOR_COOLDOWN,
-            session_affinity_ttl: Duration::from_secs(60 * 60),
+            session_affinity_ttl: Duration::from_hours(1),
             session_affinity_subagents: true,
             retry: crate::pool_retry::RetryPolicy::default(),
             request_limits: Vec::new(),

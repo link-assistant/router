@@ -54,7 +54,7 @@ fn an_interrupted_stream_flushes_held_text_then_reports_the_failure() {
     assert!(out.contains("<EN"), "{out}");
     assert!(out.contains("timeout_error"), "{out}");
     assert!(!out.contains("message_stop"), "{out}");
-    assert!(t.finish().is_empty());
+    assert_eq!(t.finish().len(), 0);
 
     let mut t = AnthropicStreamTranslator::new("claude-sonnet-4-5");
     let mut out =
@@ -135,5 +135,5 @@ fn finish_is_idempotent_and_reports_a_cut_stream_as_an_error() {
     assert!(first.contains("event: error"), "{first}");
     assert!(first.contains(INCOMPLETE_STREAM_MESSAGE), "{first}");
     assert!(!first.contains("message_stop"), "{first}");
-    assert!(t.finish().is_empty());
+    assert_eq!(t.finish().len(), 0);
 }

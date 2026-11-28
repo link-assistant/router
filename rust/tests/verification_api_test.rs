@@ -372,7 +372,7 @@ async fn client_preparation_refusal_preserves_explanations_and_optional_manifest
     assert_eq!(result.data["failed"], !cfg!(target_os = "macos"));
     assert_eq!(result.exit_code, u8::from(!cfg!(target_os = "macos")));
     let unexecuted = result.data["areas_not_run"].as_array().unwrap();
-    assert!(!unexecuted.is_empty());
+    assert_ne!(unexecuted.len(), 0);
     for area in unexecuted {
         assert!(area["name"].as_str().is_some());
         assert!(area["reason"].as_str().is_some());

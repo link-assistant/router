@@ -1,0 +1,35 @@
+Tool or image	Initial pin	Active pin	Current upstream release/reference	Publisher
+Rust stable	1.98.1 in workflows; 1.99.1 in Docker	1.100.1 in hosted workflows; 1.100.0 in Docker and Nix pending publisher updates	1.100.1	https://static.rust-lang.org/dist/channel-rust-stable.toml
+Rust nightly	nightly	nightly-2026-11-26	nightly-2026-11-26 complete manifest at inventory time	https://static.rust-lang.org/dist/2026-11-26/channel-rust-nightly.toml
+Node	20 in development; 20 and 24 binding matrix	26.13.1; 20.20.2 for the TypeScript stage; 20 and 24 binding compatibility	26.13.1	https://nodejs.org/dist/index.json
+npm	Toolchain bundled	12.2.3 on Node 24 and 26; 11.21.3 on Node 20	12.2.3; 11.21.3 latest with Node 20 support	https://registry.npmjs.org/npm/latest
+Bun	1.4.3; Docker tag 1	1.4.5	1.4.5	https://github.com/oven-sh/bun/releases/tag/bun-v1.4.5
+CPython	3.10	3.15.2; 3.10 binding compatibility	3.15.2	https://www.python.org/downloads/release/python-3152/
+uv	—	0.13.10	0.13.10	https://pypi.org/pypi/uv/0.13.10/json
+Go	Runner default	1.27.4	1.27.4	https://go.dev/dl/?mode=json
+Temurin JDK	Runner default	27 with check-latest, resolved 27.0.1.1+4	27.0.1.1+4	https://api.adoptium.net/v3/assets/latest/27/hotspot?architecture=x64&image_type=jdk&os=linux&vendor=eclipse
+PHP	Runner default	8.6 with current patch, resolved 8.6.0	8.6.0	https://www.php.net/releases/index.php?json&version=8.6&max=2
+Composer	Runner default	2.11.3	2.11.3	https://getcomposer.org/versions
+Apache Maven	Runner default	3.10.2	3.10.2 stable	https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/maven-metadata.xml
+OpenAPI Generator	7.25.0	7.28.0	7.28.0	https://repo.maven.apache.org/maven2/org/openapitools/openapi-generator-cli/maven-metadata.xml
+cargo-fuzz	0.13.1	0.13.2	0.13.2	https://index.crates.io/ca/rg/cargo-fuzz
+cargo-audit	0.22.2	0.23.0	0.23.0	https://index.crates.io/ca/rg/cargo-audit
+cargo-llvm-cov	0.9.1	0.9.2	0.9.2	https://index.crates.io/ca/rg/cargo-llvm-cov
+cargo-cyclonedx	0.5.10	0.5.10	0.5.10	https://index.crates.io/ca/rg/cargo-cyclonedx
+cargo-mutants	27.1.0	27.1.0	27.1.0	https://index.crates.io/ca/rg/cargo-mutants
+cargo-semver-checks	0.51.0	0.51.0	0.51.0	https://index.crates.io/ca/rg/cargo-semver-checks
+rust-script	0.36.0	0.36.0	0.36.0	https://index.crates.io/ru/st/rust-script
+Claude Code	2.1.265	2.1.332	2.1.332	https://registry.npmjs.org/@anthropic-ai%2fclaude-code/latest
+Codex	0.154.0	0.172.0	0.172.0	https://registry.npmjs.org/@openai%2fcodex/latest
+Gemini CLI	0.59.0	0.71.1	0.71.1	https://registry.npmjs.org/@google%2fgemini-cli/latest
+Qwen Code	0.23.1	0.28.7	0.28.7	https://registry.npmjs.org/@qwen-code%2fqwen-code/latest
+OpenCode	1.18.29	1.19.6	1.19.6	https://registry.npmjs.org/opencode-ai/latest
+rust slim-trixie builder	1.99.1 at f6c4a35d21dbb3c89d7a8d056c193e94fc09037f2b58dd858b09c39a47dd02d7	1.100.0 at 3b199fd6db7d709274df56565b8f4003f9e30d7bfcff9d53148c86053b7855e2	1.100.0-slim-trixie	https://hub.docker.com/_/rust/tags
+oven/bun base	1 at ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598	1.4.5 at 3aa040e5445efa09d75bb428a64ba50db13e2b3ac9b6b0c7f145615f62b2ee18	1.4.5	https://hub.docker.com/r/oven/bun/tags
+Debian runtime	trixie-slim at a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2	trixie-slim at 8aa5a7bf5a1955bddbe7d74fcdd0b91ab30e74362a8b73af672b0481b35b44a0	trixie-slim	https://hub.docker.com/_/debian/tags
+Alpine tunnel	3.24 at be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a	3.24 at f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf	3.24	https://hub.docker.com/_/alpine/tags
+Nix CLI	—	2.36.0	2.36.0	https://releases.nixos.org/nix/nix-2.36.0/install
+Nix CLI (Intel macOS)	—	2.35.6	2.35.6 is the latest official Intel installer; 2.36.0 drops the platform	https://releases.nixos.org/nix/nix-2.35.6/install
+Nixpkgs	c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0	2786a2a72088ecf32aea5b3ec52099e6a7cff78f	nixos-unstable at 2786a2a72088ecf32aea5b3ec52099e6a7cff78f	https://github.com/NixOS/nixpkgs/tree/nixos-unstable
+Nixpkgs (Intel macOS)	c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0	b79fb186802610f5363769394ba4a4b921ea15c9	nixpkgs-26.05-darwin at b79fb186802610f5363769394ba4a4b921ea15c9; unstable drops the platform	https://github.com/NixOS/nixpkgs/tree/nixpkgs-26.05-darwin
+Rust overlay	—	8771c4aba509d6efb8bf376fd8cb657cce52b013	8771c4aba509d6efb8bf376fd8cb657cce52b013	https://github.com/oxalica/rust-overlay/tree/8771c4aba509d6efb8bf376fd8cb657cce52b013

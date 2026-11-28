@@ -108,7 +108,7 @@ fn request_builds_a_sorted_deduplicated_exact_grant() {
 
     let unpinned = request(&args(&["codex"])).expect("legacy unpinned launch");
     assert!(unpinned.forwarded.is_none());
-    assert!(unpinned.requested_policy.allowed_models.is_empty());
+    assert_eq!(unpinned.requested_policy.allowed_models.len(), 0);
 }
 
 #[test]

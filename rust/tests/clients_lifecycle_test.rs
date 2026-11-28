@@ -24,7 +24,7 @@ fn claude_backup_merge_preserves_new_sessions_and_authentication() {
     );
     let id = String::from_utf8(created.stdout).expect("backup id");
     let id = id.trim();
-    assert!(!id.is_empty());
+    assert_ne!(id, "");
     let backup = home
         .path()
         .join(".config/link-assistant-router/client-backups")

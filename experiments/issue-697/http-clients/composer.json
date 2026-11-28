@@ -1,0 +1,24 @@
+{
+    "name": "link-assistant/router-http-client-probe",
+    "description": "Dependencies for the generated PHP Router contract probe",
+    "license": "Unlicense",
+    "require": {
+        "php": "^8.5",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "guzzlehttp/guzzle": "^8.6.0",
+        "guzzlehttp/psr7": "^3.6.0",
+        "psr/http-client": "^1.0.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^13.4.8",
+        "friendsofphp/php-cs-fixer": "^3.95.32"
+    },
+    "autoload": {
+        "psr-4": { "LinkAssistant\\Router\\": "lib/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "LinkAssistant\\Router\\Test\\": "test/" }
+    }
+}

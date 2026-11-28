@@ -38,7 +38,7 @@ const UNIFIED_PREFIX: &str = "anthropic-ratelimit-unified-";
 ///
 /// The weekly window plus a day of slack. A reset further out is treated as this bound, so a corrupt
 /// or hostile header cannot remove an account for longer.
-pub const MAX_VENDOR_COOLDOWN: Duration = Duration::from_secs(8 * 24 * 60 * 60);
+pub const MAX_VENDOR_COOLDOWN: Duration = Duration::from_hours(192);
 
 /// The data-directory file that keeps per-account cooldowns and pauses.
 pub const STATE_FILE: &str = "account-limits.json";
@@ -488,8 +488,7 @@ pub fn load(data_dir: &Path, provider: &str) -> BTreeMap<String, AccountLimitSta
     let now = now_unix();
     load_any(data_dir)
         .filter(|persisted| persisted.provider == provider)
-        .map(|persisted| persisted.accounts)
-        .unwrap_or_default()
+        .map_or_default(|persisted| persisted.accounts)
         .into_iter()
         .filter_map(|(name, mut state)| {
             state.expire(now);

@@ -27,7 +27,7 @@ fn actual_nominal_copy_and_derived_clone_preserve_aliases_order_and_detached_vec
     detached[0] = Denied;
     assert_eq!(input[0], Native);
     assert_eq!(cloned[0], Native);
-    assert!(bounded_copy(&[]).is_empty());
+    assert_eq!(bounded_copy(&[]).len(), 0);
     assert_eq!(bounded_copy(&vec![Override; 4096]), vec![Override; 4096]);
 }
 

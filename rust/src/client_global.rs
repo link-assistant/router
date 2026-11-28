@@ -369,7 +369,7 @@ mod tests {
     fn digest_is_stable_and_distinguishes_contents() {
         assert_eq!(digest(b"same"), digest(b"same"));
         assert_ne!(digest(b"same"), digest(b"other"));
-        assert!(!digest(b"").is_empty());
+        assert_ne!(digest(b""), "");
     }
 
     #[test]

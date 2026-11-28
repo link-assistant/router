@@ -1,0 +1,41 @@
+Dependency	Original requirement	Resolved versions	Published version	Runtime requirement or registry error	Registry metadata
+attrs		26.1.0	26.1.0	>=3.9	https://pypi.org/pypi/attrs/json
+boolean-py		5.0	5.0		https://pypi.org/pypi/boolean-py/json
+build	unconstrained in CI	1.6.1	1.6.1	>=3.10	https://pypi.org/pypi/build/json
+cachecontrol		0.15.0	0.15.0	>=3.10	https://pypi.org/pypi/cachecontrol/json
+certifi		2026.11.20	2026.11.20	>=3.7	https://pypi.org/pypi/certifi/json
+charset-normalizer		3.5.3	3.5.3	>=3.7	https://pypi.org/pypi/charset-normalizer/json
+colorama		0.4.6	0.4.6	!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7	https://pypi.org/pypi/colorama/json
+cyclonedx-python-lib		11.13.0	11.13.0	<4,>=3.9	https://pypi.org/pypi/cyclonedx-python-lib/json
+defusedxml		0.7.1	0.7.1	>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*	https://pypi.org/pypi/defusedxml/json
+filelock		4.3.1	4.3.1	>=3.11	https://pypi.org/pypi/filelock/json
+idna		3.20	3.20	>=3.9	https://pypi.org/pypi/idna/json
+importlib-metadata		9.0.1	10.2.0	>=3.11	https://pypi.org/pypi/importlib-metadata/json
+jsonschema	>=4.23,<5	4.26.0	4.26.0	>=3.10	https://pypi.org/pypi/jsonschema/json
+jsonschema-specifications		2025.9.1	2025.9.1	>=3.9	https://pypi.org/pypi/jsonschema-specifications/json
+license-expression		30.4.4	30.4.4	>=3.9	https://pypi.org/pypi/license-expression/json
+markdown-it-py		4.3.0	4.3.0	>=3.10	https://pypi.org/pypi/markdown-it-py/json
+mdurl		0.1.2	0.1.2	>=3.7	https://pypi.org/pypi/mdurl/json
+msgpack		1.2.4	1.2.4	>=3.10	https://pypi.org/pypi/msgpack/json
+packageurl-python		0.17.6	0.17.6	>=3.8	https://pypi.org/pypi/packageurl-python/json
+packaging		26.4	26.4	>=3.10	https://pypi.org/pypi/packaging/json
+pip		26.3	26.3	>=3.10	https://pypi.org/pypi/pip/json
+pip-api		0.0.35	0.0.35	>=3.9	https://pypi.org/pypi/pip-api/json
+pip-audit		2.10.1	2.10.1	>=3.10	https://pypi.org/pypi/pip-audit/json
+pip-requirements-parser		32.0.1	32.0.1	>=3.6.0	https://pypi.org/pypi/pip-requirements-parser/json
+platformdirs		4.14.9	4.14.9	>=3.11	https://pypi.org/pypi/platformdirs/json
+py-serializable		2.2.0	2.2.0	<4.0,>=3.8	https://pypi.org/pypi/py-serializable/json
+pygments		2.21.0	2.21.0	>=3.9	https://pypi.org/pypi/pygments/json
+pyparsing		3.3.3	3.3.3	>=3.9	https://pypi.org/pypi/pyparsing/json
+pyproject-hooks		1.3.3	1.3.3	>=3.8	https://pypi.org/pypi/pyproject-hooks/json
+referencing		0.37.0	0.37.0	>=3.10	https://pypi.org/pypi/referencing/json
+requests		2.34.2	2.34.2	>=3.10	https://pypi.org/pypi/requests/json
+rich		15.0.0	15.0.0	>=3.9.0	https://pypi.org/pypi/rich/json
+rpds-py		0.30.0, 2026.9.1	2026.9.1	>=3.11	https://pypi.org/pypi/rpds-py/json
+setuptools	>=77	84.2.1	84.2.1	>=3.10	https://pypi.org/pypi/setuptools/json
+sortedcontainers		2.4.0	2.4.0		https://pypi.org/pypi/sortedcontainers/json
+tomli		2.5.0	2.5.0	>=3.8	https://pypi.org/pypi/tomli/json
+tomli-w		1.2.0	1.2.0	>=3.9	https://pypi.org/pypi/tomli-w/json
+typing-extensions		4.16.0	4.16.0	>=3.9	https://pypi.org/pypi/typing-extensions/json
+urllib3		2.8.0	2.8.0	>=3.10	https://pypi.org/pypi/urllib3/json
+zipp		4.1.2	4.1.2	>=3.10	https://pypi.org/pypi/zipp/json

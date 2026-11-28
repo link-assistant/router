@@ -68,7 +68,7 @@ fn local_deploy_force_is_explicit_and_cannot_hide_in_status_or_remote_runs() {
 #[test]
 fn login_cli_defaults_to_bare_tui() {
     let cli = Cli::try_parse_from(["link-assistant-router"]).unwrap();
-    assert!(cli.login_cli_args.is_empty());
+    assert_eq!(cli.login_cli_args.len(), 0);
     assert_eq!(cli.upstream_provider, "auto");
 }
 

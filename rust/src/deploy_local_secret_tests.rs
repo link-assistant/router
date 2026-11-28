@@ -118,7 +118,7 @@ fn a_to_b_to_a_with_a_stable_image_keeps_the_backend_and_its_tokens() {
         run(&runner, root.path(), "router:1", SECRET_B, false),
         ExitCode::from(2)
     );
-    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
+    assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
     assert_eq!(serving(root.path()), backend);
     assert!(authorized(&runner, root.path(), &token));
     assert_eq!(
@@ -132,7 +132,7 @@ fn a_to_b_to_a_with_a_stable_image_keeps_the_backend_and_its_tokens() {
         ExitCode::SUCCESS
     );
     let world = runner.0.lock().unwrap();
-    assert!(mutations(&world).is_empty());
+    assert_eq!(mutations(&world).len(), 0);
     assert_eq!(world.containers.len(), 2);
     drop(world);
     assert_eq!(serving(root.path()), backend);

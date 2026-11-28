@@ -8,22 +8,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         entryFileNames: 'assets/app.js',
         chunkFileNames: 'assets/[name].js',
         assetFileNames: 'assets/app.[ext]',
-        manualChunks(id) {
-          if (id.includes('/node_modules/react') || id.includes('/node_modules/scheduler')) {
-            return 'react'
-          }
-          if (
-            id.includes('/node_modules/@chakra-ui') ||
-            id.includes('/node_modules/@emotion') ||
-            id.includes('/node_modules/next-themes')
-          ) {
-            return 'ui-vendor'
-          }
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /\/node_modules\/(react(?:-dom)?|scheduler)\//, priority: 2 },
+            { name: 'ui-vendor', test: /\/node_modules\/(@chakra-ui|@emotion|next-themes)\//, priority: 1 },
+          ],
         },
       },
     },

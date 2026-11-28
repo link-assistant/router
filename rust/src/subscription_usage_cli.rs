@@ -190,13 +190,11 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
             .map_or_else(|| "unavailable".into(), |value| format!("{value:.1}% used"));
         let remaining = window
             .remaining_percentage
-            .map(|value| format!(", {value:.1}% remaining"))
-            .unwrap_or_default();
+            .map_or_default(|value| format!(", {value:.1}% remaining"));
         let reset = window
             .resets_at
             .as_deref()
-            .map(|value| format!(", resets {value}"))
-            .unwrap_or_default();
+            .map_or_default(|value| format!(", resets {value}"));
         let varied_resets = if window.reset_times.is_empty() {
             String::new()
         } else {
@@ -204,12 +202,10 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
         };
         let contributors = window
             .contributors
-            .map(|count| format!(", {count} contributor(s)"))
-            .unwrap_or_default();
+            .map_or_default(|count| format!(", {count} contributor(s)"));
         let duration = window
             .window_seconds
-            .map(|seconds| format!(", window {}", readable_duration(seconds)))
-            .unwrap_or_default();
+            .map_or_default(|seconds| format!(", window {}", readable_duration(seconds)));
         let _ = writeln!(
             output,
             "  {}: {used}{remaining}{duration}{reset}{varied_resets}{contributors}",
@@ -249,17 +245,14 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
                 .map_or_else(|| "unavailable".into(), |value| format!("{value:.1}% used"));
             let remaining = window
                 .remaining_percentage
-                .map(|value| format!(", {value:.1}% remaining"))
-                .unwrap_or_default();
+                .map_or_default(|value| format!(", {value:.1}% remaining"));
             let reset = window
                 .resets_at
                 .as_deref()
-                .map(|value| format!(", resets {value}"))
-                .unwrap_or_default();
+                .map_or_default(|value| format!(", resets {value}"));
             let duration = window
                 .window_seconds
-                .map(|seconds| format!(", window {}", readable_duration(seconds)))
-                .unwrap_or_default();
+                .map_or_default(|seconds| format!(", window {}", readable_duration(seconds)));
             let _ = writeln!(
                 output,
                 "    {}: {used}{remaining}{duration}{reset}",
@@ -312,8 +305,7 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
             let currency = extra
                 .currency
                 .as_deref()
-                .map(|currency| format!(" {currency}"))
-                .unwrap_or_default();
+                .map_or_default(|currency| format!(" {currency}"));
             let _ = writeln!(output, "    amount: {used} / {limit}{currency}");
         }
         if let Some(remaining) = extra.remaining_credits {
@@ -347,8 +339,7 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
             if let Some(used) = limit.used_percentage {
                 let remaining = limit
                     .remaining_percentage
-                    .map(|value| format!(", {value:.1}% remaining"))
-                    .unwrap_or_default();
+                    .map_or_default(|value| format!(", {value:.1}% remaining"));
                 let _ = writeln!(output, "    utilization: {used:.1}% used{remaining}");
             }
             if let Some(reset) = &limit.resets_at {

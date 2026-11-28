@@ -169,7 +169,7 @@ fn a_failing_first_target_does_not_hide_the_rest() {
         .collect();
     assert_eq!(statuses, ["failed", "proven", "not-run"]);
     let (areas_not_run, targets_not_run) = unexecuted(&[area]);
-    assert!(areas_not_run.is_empty());
+    assert_eq!(areas_not_run.len(), 0);
     let line = summary(
         false,
         true,

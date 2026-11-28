@@ -61,7 +61,7 @@ fn a_strict_policy_refuses_literal_and_named_internal_base_urls() {
         let error = STRICT
             .check_base_url(url)
             .expect_err(&format!("{url} must be refused"));
-        assert!(!error.to_string().is_empty());
+        assert_ne!(error.to_string(), "");
     }
     for url in [
         "https://api.anthropic.com",

@@ -2,6 +2,7 @@
 // Drafted translation oracle: these shapes mirror the JavaScript source the
 // translator read. Clippy findings are fixed in its rules, not by hand (#772 ledger).
 #![allow(clippy::iter_on_single_items)]
+#![allow(clippy::map_unwrap_or)]
 #![allow(clippy::unreadable_literal)]
 use link_assistant_router::{translation_core::Json, translation_json_fields_core as fields};
 

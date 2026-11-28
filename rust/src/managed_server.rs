@@ -754,7 +754,6 @@ pub fn remove_managed(yes: bool) -> Result<(), AnyError> {
     Ok(())
 }
 
-#[must_use]
 pub fn reap(pid: u32) -> ExitCode {
     // The owner holds this pipe open for the lifetime of its managed lease.
     // EOF is delivered both on orderly teardown and if the wrapper is killed,
@@ -886,8 +885,7 @@ fn wait_for_health(port: u16) -> Result<(), AnyError> {
     let logs = crate::operation_context::process_output(
         crate::operation_context::command("docker").args(["logs", "--tail", "20", CONTAINER]),
     )
-    .map(|output| String::from_utf8_lossy(&output.stderr).into_owned())
-    .unwrap_or_default();
+    .map_or_default(|output| String::from_utf8_lossy(&output.stderr).into_owned());
     Err(format!(
         "managed router container did not become healthy on 127.0.0.1:{port}: {}",
         compact(&logs)

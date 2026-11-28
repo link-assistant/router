@@ -48,19 +48,17 @@ pub(super) fn mutations(world: &World) -> Vec<Vec<String>> {
 }
 
 fn state_files(root: &Path) -> Vec<(String, Vec<u8>)> {
-    let mut files = std::fs::read_dir(root.join("state"))
-        .map(|entries| {
-            entries
-                .map(|entry| {
-                    let entry = entry.unwrap();
-                    (
-                        entry.file_name().to_string_lossy().into_owned(),
-                        std::fs::read(entry.path()).unwrap_or_default(),
-                    )
-                })
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
+    let mut files = std::fs::read_dir(root.join("state")).map_or_default(|entries| {
+        entries
+            .map(|entry| {
+                let entry = entry.unwrap();
+                (
+                    entry.file_name().to_string_lossy().into_owned(),
+                    std::fs::read(entry.path()).unwrap_or_default(),
+                )
+            })
+            .collect::<Vec<_>>()
+    });
     files.sort();
     files
 }
@@ -150,7 +148,7 @@ fn status_describes_a_relay_without_an_active_record_and_changes_nothing() {
             assert!(report.contains(expected), "missing {expected}: {report}");
         }
         assert!(!report.contains(SECRET));
-        assert!(mutations(&runner.0.lock().unwrap()).is_empty());
+        assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
     }
 }
 
@@ -251,5 +249,5 @@ fn adoption_refuses_a_newer_record_and_a_relay_owned_by_another_root() {
     let report = status.diagnosis("inconsistent").join("\n");
     assert!(report.contains("owner=foreign root=/elsewhere"), "{report}");
     assert!(report.contains("recovery_plan=manual"), "{report}");
-    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
+    assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
 }

@@ -9,6 +9,8 @@ fn main() {
         .expect("failed to read .github/workflows/release.yml");
     let reconciliation = fs::read_to_string(".github/workflows/verify-releases.yml")
         .expect("failed to read .github/workflows/verify-releases.yml");
+    let cargo_tool_installer = fs::read_to_string("scripts/install-ci-cargo-tool.sh")
+        .expect("failed to read scripts/install-ci-cargo-tool.sh");
 
     let required_snippets = [
         "auto-release:",
@@ -19,15 +21,16 @@ fn main() {
         "CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
         "DOCKERHUB_IMAGE: konard/link-assistant-router",
         "rust-script scripts/wait-for-crate.rs",
-        "cargo install rust-script --version 0.36.0 --locked",
-        "cargo install cargo-audit --version 0.22.2 --locked --force",
-        "cargo install cargo-cyclonedx --version 0.5.9 --locked",
+        "bash scripts/install-ci-cargo-tool.sh rust-script",
+        "bash scripts/install-ci-cargo-tool.sh cargo-audit",
+        "bash scripts/install-ci-cargo-tool.sh cargo-cyclonedx",
+        "bash .router-ci-tools/scripts/install-ci-cargo-tool.sh cargo-cyclonedx",
         "cargo cyclonedx --format json --all-features --all --spec-version 1.5",
         "--manifest-path rust/Cargo.toml",
         "--override-filename link-assistant-router.cdx",
         "mv rust/link-assistant-router.cdx.json",
         "artifact-metadata: write",
-        "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+        "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333",
         "cancel-in-progress: false",
         "npm run build 2>&1 | tee /tmp/admin-ui-build.log",
         "git diff --exit-code -- ui/dist",
@@ -94,6 +97,9 @@ fn main() {
                 "missing required release workflow snippet: {snippet}"
             ));
         }
+    }
+    if !cargo_tool_installer.contains("--locked --force") {
+        failures.push("Cargo tools must replace cached binaries from the reviewed lock".to_string());
     }
 
     if count_occurrences(&workflow, "packages: write") < 2 {

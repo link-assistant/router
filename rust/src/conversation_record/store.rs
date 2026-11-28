@@ -206,7 +206,7 @@ fn read_turn(
     let headers = response
         .get("headers")
         .and_then(crate::translation_core::Json::as_array)
-        .map(|pairs| {
+        .map_or_default(|pairs| {
             pairs
                 .iter()
                 .filter_map(|pair| {
@@ -217,18 +217,16 @@ fn read_turn(
                     ))
                 })
                 .collect()
-        })
-        .unwrap_or_default();
+        });
     let events = response
         .get("events")
         .and_then(crate::translation_core::Json::as_array)
-        .map(|events| {
+        .map_or_default(|events| {
             events
                 .iter()
                 .filter_map(|event| event.as_str().map(str::to_string))
                 .collect()
-        })
-        .unwrap_or_default();
+        });
     Some(Turn {
         index: position,
         request,

@@ -42,7 +42,7 @@ fn an_undiscovered_catalog_is_empty_rather_than_seeded() {
         );
         assert!(!status.discovered, "{provider} must not claim a discovery");
         assert!(status.is_degraded(), "{provider} must report as degraded");
-        assert!(catalogs.models(provider).is_empty());
+        assert_eq!(catalogs.models(provider).len(), 0);
     }
 }
 
@@ -97,7 +97,7 @@ fn legacy_catalog_views_preserve_primary_and_anonymous_fallback_semantics() {
     let known_owner_does_not_fallback =
         catalogs.status_for(SubscriptionProvider::Codex, "account-2");
     assert!(!known_owner_does_not_fallback.discovered);
-    assert!(known_owner_does_not_fallback.models.is_empty());
+    assert_eq!(known_owner_does_not_fallback.models.len(), 0);
 
     let legacy = catalogs.statuses();
     assert_eq!(legacy.len(), 2, "secondary accounts are not duplicated");

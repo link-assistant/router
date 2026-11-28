@@ -32,7 +32,12 @@ test('unsigned/algorithm-confused token and published sentinel cannot authentica
   const manager = new TokenManager({secret:fixture.token_secret,clock:() => fixture.clock});
   const token = `la_sk_${Buffer.from(JSON.stringify({alg:'none'})).toString('base64url')}.${Buffer.from(JSON.stringify({sub:'fake',exp:fixture.clock+100,iat:fixture.clock})).toString('base64url')}.AA`;
   await rejectsCode(manager.validate(token),'invalid_token');
-  for (const secret of ['', '\0placeholder','unused-by-auth']) await rejectsCode(new TokenManager({secret}).issue({ttl_hours:1}),'issuer_secret_unset');
+  const issued = await manager.issue({ttl_hours:1});
+  for (const secret of ['', '\0placeholder','unused-by-auth']) {
+    const unconfigured = new TokenManager({secret});
+    await rejectsCode(unconfigured.issue({ttl_hours:1}),'issuer_secret_unset');
+    await rejectsCode(unconfigured.validate(issued.token),'issuer_secret_unset');
+  }
 });
 test('durable exact model authority fails closed for untracked and wrong model selectors',async () => {
   const manager = new TokenManager({secret:fixture.token_secret,clock:() => fixture.clock});

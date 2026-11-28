@@ -137,7 +137,7 @@ async fn absent_auth_and_client_probes_expose_their_state() {
     let auth = execute(&context, &["auth", "status", "--local"]).await;
     assert!(auth.success, "{:?}", auth.diagnostics);
     let providers = auth.data["credentials"].as_array().unwrap();
-    assert!(!providers.is_empty());
+    assert_ne!(providers.len(), 0);
     assert!(providers.iter().all(|entry| entry["state"] == "absent"));
     let target = cli::AuthTarget {
         local: true,
@@ -389,18 +389,15 @@ async fn deployment_discovery_and_server_selection_report_state_changes() {
 fn inventories_validate_success_schema_and_operation_before_decoding() {
     use serde_json::json;
     let decode = operations::decode_token_inventory;
-    assert!(decode(b"[]").unwrap().is_empty());
+    assert_eq!(decode(b"[]").unwrap().len(), 0);
     let legacy = br#"[{"id":"fixture","label":"laptop","issued_at":1,"expires_at":9999999999,"revoked":false,"client_kind":"codex","principal_id":"primary"}]"#;
     let records = decode(legacy).unwrap();
     assert_eq!(records[0].label, "laptop");
     assert_eq!(records[0].client_kind.as_deref(), Some("codex"));
     let valid = json!({"schema":"link-assistant-router/tokens-list/v1", "operation":"tokens.list",
         "success":true,"exit_code":0,"data":[],"diagnostics":[]});
-    assert!(
-        decode(&serde_json::to_vec(&valid).unwrap())
-            .unwrap()
-            .is_empty()
-    );
+    let decoded = decode(&serde_json::to_vec(&valid).unwrap()).unwrap();
+    assert_eq!(decoded.len(), 0);
     let mut populated = valid.clone();
     populated["data"] = serde_json::to_value(&records).unwrap();
     assert_eq!(

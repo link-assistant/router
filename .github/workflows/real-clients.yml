@@ -41,41 +41,46 @@ jobs:
     name: Claude Code, Codex, Gemini, Qwen, and OpenCode
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.332'
+      ROUTER_REAL_CLIENT_CODEX_VERSION: '0.172.0'
+      ROUTER_REAL_CLIENT_GEMINI_VERSION: '0.71.1'
+      ROUTER_REAL_CLIENT_QWEN_VERSION: '0.28.7'
+      ROUTER_REAL_CLIENT_OPENCODE_VERSION: '1.19.6'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26.13.1'
           cache: npm
           cache-dependency-path: ui/package-lock.json
+      - run: npm install --global npm@12.2.3 --ignore-scripts
 
       - name: Install pinned real clients
         run: |
           npm install --global \
-            @anthropic-ai/claude-code@2.1.265 \
-            @openai/codex@0.154.0 \
-            @google/gemini-cli@0.59.0 \
-            @qwen-code/qwen-code@0.23.1 \
-            opencode-ai@1.18.29
+            --allow-scripts=@anthropic-ai/claude-code,@github/keytar@7.10.6,node-pty@1.0.0,@qwen-code/audio-capture@0.28.7,opencode-ai \
+            "@anthropic-ai/claude-code@$ROUTER_REAL_CLIENT_CLAUDE_VERSION" \
+            "@openai/codex@$ROUTER_REAL_CLIENT_CODEX_VERSION" \
+            "@google/gemini-cli@$ROUTER_REAL_CLIENT_GEMINI_VERSION" \
+            "@qwen-code/qwen-code@$ROUTER_REAL_CLIENT_QWEN_VERSION" \
+            "opencode-ai@$ROUTER_REAL_CLIENT_OPENCODE_VERSION"
 
       - name: Capture native requests against the offline mock
         env:
           ROUTER_REAL_CLIENT_TESTS: '1'
-          ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.265'
-          ROUTER_REAL_CLIENT_CODEX_VERSION: '0.154.0'
-          ROUTER_REAL_CLIENT_OPENCODE_VERSION: '1.18.29'
         run: cargo run --locked --bin router -- verify -- --area real-clients
 
       - name: Preserve verification diagnostics
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: verification-${{ github.job }}-${{ strategy.job-index || 0 }}
           path: target/verification/
@@ -89,11 +94,10 @@ jobs:
       # for it and reads the result. This job stays what its name says: real
       # clients, no credentials, nothing spent.
 
-  # The pinned 2.1.265 capture above is a tested baseline, not a maximum:
-  # Router does not refuse a newer Claude by version number (issue #609). Run
+  # Exercise the Claude releases from the issue #609 regression. Run
   # the same hermetic Claude capture -- native model discovery, Router-only
   # sampling credentials, the untouched stored Claude.ai login, and the model
-  # selector -- against newer releases so client drift fails here, at the
+  # selector -- across the compatibility range so client drift fails at the
   # operation that changed, rather than being hidden behind a version gate.
   claude-newer-release:
     if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
@@ -105,7 +109,7 @@ jobs:
       fail-fast: false
       matrix:
         # `latest` moves under every pull request; keep pull requests on a
-        # pinned newer release and let push, nightly, and manual runs also
+        # pinned regression releases and let push, nightly, and manual runs also
         # track the moving tag.
         claude: ${{ fromJSON(github.event_name == 'pull_request' && '["2.1.284", "2.1.291"]' || '["2.1.284", "2.1.291", "latest"]') }}
         capture: [1]
@@ -117,23 +121,24 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26.13.1'
           cache: npm
           cache-dependency-path: ui/package-lock.json
+      - run: npm install --global npm@12.2.3 --ignore-scripts
 
       - name: Install Claude Code ${{ matrix.claude }}
         env:
           CLAUDE_TAG: ${{ matrix.claude }}
         run: |
           version="$(npm view "@anthropic-ai/claude-code@${CLAUDE_TAG}" version)"
-          npm install --global "@anthropic-ai/claude-code@${version}"
+          npm install --global --allow-scripts=@anthropic-ai/claude-code "@anthropic-ai/claude-code@${version}"
           echo "ROUTER_REAL_CLIENT_CLAUDE_VERSION=${version}" >> "$GITHUB_ENV"
 
       - name: Capture native Claude requests against the offline mock
@@ -143,42 +148,43 @@ jobs:
 
       - name: Preserve verification diagnostics
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: verification-${{ github.job }}-${{ strategy.job-index || 0 }}
           path: target/verification/
           if-no-files-found: ignore
 
   # Codex 0.157 made TUI startup depend on workspace discovery through
-  # `wham/accounts/check` (issue #612), which the pinned 0.154.0 capture never
+  # `wham/accounts/check` (issue #612), which the original 0.154.0 capture never
   # calls. Run the Codex capture, history/notes, and TUI model selector against
   # a newer release so bootstrap drift fails at the operation that changed.
   codex-newer-release:
     if: needs.javascript.outputs.rust_allowed == 'true' && (needs.javascript.result == 'success')
     needs: [javascript]
-    name: Codex ${{ matrix.codex }} (newer than baseline)
+    name: Codex ${{ matrix.codex }} (workspace discovery)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        # Same policy as Claude: pull requests pin a newer release; push,
+        # Pull requests pin the issue #612 regression release; push,
         # nightly, and manual runs also track the moving tag.
         codex: ${{ fromJSON(github.event_name == 'pull_request' && '["0.158.0"]' || '["0.158.0", "latest"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
-          toolchain: 1.98.1
+          toolchain: 1.100.1
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26.13.1'
           cache: npm
           cache-dependency-path: ui/package-lock.json
+      - run: npm install --global npm@12.2.3 --ignore-scripts
 
       - name: Install Codex ${{ matrix.codex }}
         env:
@@ -195,7 +201,7 @@ jobs:
 
       - name: Preserve verification diagnostics
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: verification-${{ github.job }}-${{ strategy.job-index || 0 }}
           path: target/verification/

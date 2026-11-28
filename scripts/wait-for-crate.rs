@@ -19,8 +19,8 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
-//! ureq = "2"
+//! regex = "1.13.2"
+//! ureq = "3.5.2"
 //! ```
 
 use regex::Regex;
@@ -120,11 +120,11 @@ fn crate_version_exists(crate_name: &str, version: &str) -> bool {
     let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
 
     match ureq::get(&url)
-        .set("User-Agent", "rust-script-wait-for-crate")
+        .header("User-Agent", "rust-script-wait-for-crate")
         .call()
     {
         Ok(response) => response.status() == 200,
-        Err(ureq::Error::Status(404, _)) => false,
+        Err(ureq::Error::StatusCode(404)) => false,
         Err(e) => {
             eprintln!("Warning: Could not check crates.io: {}", e);
             false

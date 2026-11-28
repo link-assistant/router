@@ -128,7 +128,7 @@ fn adaptive_thinking_evidence() -> &'static AdaptiveThinkingEvidence {
                 .starts_with("https://platform.claude.com/"),
             "adaptive-thinking evidence must retain its provider-owned source"
         );
-        assert!(!evidence.verified_at.is_empty());
+        assert_ne!(evidence.verified_at, "");
         assert_eq!(evidence.product, "Anthropic Messages API");
         assert_eq!(evidence.wire_protocol, "anthropic-messages");
         evidence

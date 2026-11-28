@@ -58,7 +58,7 @@ async fn buffered_and_first_chunk_callers_preserve_unicode_and_release_streams()
             .unwrap()
             .unwrap();
         let bytes = STANDARD.decode(chunk).unwrap();
-        assert!(!bytes.is_empty());
+        assert_ne!(bytes.len(), 0);
         assert!("é😀".as_bytes().starts_with(&bytes));
         server.await.unwrap();
         assert!(matches!(

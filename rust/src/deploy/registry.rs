@@ -71,8 +71,7 @@ pub fn read(path: &Path) -> Vec<Entry> {
     std::fs::read(path)
         .ok()
         .and_then(|bytes| serde_json::from_slice::<Document>(&bytes).ok())
-        .map(|document| document.deployments)
-        .unwrap_or_default()
+        .map_or_default(|document| document.deployments)
 }
 
 fn write(path: &Path, deployments: Vec<Entry>) -> Result<(), String> {
@@ -171,10 +170,10 @@ mod tests {
 
         let (directories, notes) = doctor_targets(&registry);
         assert_eq!(directories, vec![root.join("data")]);
-        assert!(notes.is_empty());
+        assert_eq!(notes, "");
 
         unregister(&registry, &root).unwrap();
-        assert!(read(&registry).is_empty());
+        assert_eq!(read(&registry).len(), 0);
     }
 
     #[test]
@@ -185,7 +184,7 @@ mod tests {
         register(&registry, entry(&gone, 8080)).unwrap();
 
         let (directories, notes) = doctor_targets(&registry);
-        assert!(directories.is_empty());
+        assert_eq!(directories.len(), 0);
         assert!(notes.contains("could not see"), "{notes}");
         assert!(notes.contains(&gone.display().to_string()), "{notes}");
     }
@@ -195,7 +194,7 @@ mod tests {
         let directory = tempfile::tempdir().unwrap();
         let registry = directory.path().join(FILE);
         std::fs::write(&registry, "not json").unwrap();
-        assert!(read(&registry).is_empty());
+        assert_eq!(read(&registry).len(), 0);
         register(&registry, entry(directory.path(), 1)).unwrap();
         assert_eq!(read(&registry).len(), 1);
     }

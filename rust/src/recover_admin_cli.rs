@@ -35,7 +35,6 @@ fn failure_envelope(error: &crate::translation_core::Str) -> crate::translation_
 }
 
 /// Mint a replacement administrator for a store this machine owns (issue #573).
-#[must_use]
 pub fn run(
     manager: &TokenManager,
     revoke_others: bool,

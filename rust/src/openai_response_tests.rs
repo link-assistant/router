@@ -179,11 +179,12 @@ fn list_models_advertises_only_the_supplied_catalog() {
     assert_eq!(arr[0]["owned_by"], "examplecorp");
 
     // An account that has discovered nothing advertises nothing.
-    assert!(
+    assert_eq!(
         list_models_from(&[], "examplecorp")["data"]
             .as_array()
             .unwrap()
-            .is_empty()
+            .len(),
+        0,
     );
 }
 

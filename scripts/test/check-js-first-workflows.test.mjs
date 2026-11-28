@@ -401,7 +401,7 @@ test('compiler case-deadline audits and complete always-retained raw receipts ca
  for(const id of ['typescript','translation','reverse-translation']){
   const runner=['translation','reverse-translation'].includes(id)?'node scripts/run-node-test-shard.mjs':'node scripts/run-node-tests.mjs';
   const job=parse(baseline['javascript-first.yml']).jobs[id];
-  const uploader=job.steps.find(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');assert.ok(uploader);
+  const uploader=job.steps.find(step=>step.uses==='actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9');assert.ok(uploader);
   for(const change of [step=>{step.if='false';},step=>{step['continue-on-error']=true;},step=>{step.with['include-hidden-files']=false;},step=>{step.with.path='unrelated/';},step=>{step.with['if-no-files-found']='ignore';}])fails('javascript-first.yml',workflow=>{change(workflow.jobs[id].steps.find(step=>step.uses===uploader.uses));},'deadline');
   fails('javascript-first.yml',workflow=>{const command=workflow.jobs[id].steps.find(step=>step.run?.startsWith(runner));command.run=command.run.replace(/node scripts\/run-node-(?:tests|test-shard)\.mjs --outer-timeout-ms=\d+/u,'node --test');},'mandatory command');
   for(const bypass of ['if','continue-on-error'])fails('javascript-first.yml',workflow=>{const step=workflow.jobs[id].steps.find(step=>step.run?.startsWith(runner));step[bypass]=bypass==='if'?'${{ always() }}':true;step.name=uploader.name;},'conditional or ignore failures');

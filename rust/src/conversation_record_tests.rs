@@ -437,7 +437,7 @@ fn a_non_streamed_body_is_one_event_and_an_empty_one_is_none() {
         split_events(b"{\"id\":\"msg_1\"}", false),
         vec!["{\"id\":\"msg_1\"}".to_string()]
     );
-    assert!(split_events(b"", false).is_empty());
+    assert_eq!(split_events(b"", false).len(), 0);
 }
 
 #[test]

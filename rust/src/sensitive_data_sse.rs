@@ -252,7 +252,7 @@ mod tests {
             "data: {}\n",
             json!({"type":"response.text.delta","delta":"[["})
         );
-        assert!(state.feed(pending.as_bytes(), false, &tokens).is_empty());
+        assert_eq!(state.feed(pending.as_bytes(), false, &tokens).len(), 0);
         let long = vec![b'x'; LINE_LIMIT + 1];
         let mut expected = pending.into_bytes();
         expected.extend_from_slice(&long);

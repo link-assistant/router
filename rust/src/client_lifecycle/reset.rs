@@ -303,7 +303,6 @@ fn run_one(
     Ok(report("reset", Some(&backup)))
 }
 
-#[must_use]
 #[allow(clippy::fn_params_excessive_bools)]
 pub fn run(
     home: Option<&Path>,

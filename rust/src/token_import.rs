@@ -384,7 +384,6 @@ pub struct ImportCommand<'a> {
 /// Exit status: 0 when every requested record is present afterwards, 1 on an
 /// error, 2 when a requested `--id` is not in the source or conflicts were
 /// left alone, so a script notices an import that did not fully happen.
-#[must_use]
 pub fn run_cli(
     target: &dyn TokenStore,
     data_dir: &Path,

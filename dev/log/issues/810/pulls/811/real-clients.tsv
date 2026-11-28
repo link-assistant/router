@@ -1,0 +1,92 @@
+package	resolved_or_exact_parent_pin	registry_latest	installed_linux_x64	parent_or_retention_reason	official_registry_metadata
+@anthropic-ai/claude-code	2.1.332	2.1.332	yes		https://registry.npmjs.org/%40anthropic-ai%2Fclaude-code/latest
+@anthropic-ai/claude-code-darwin-arm64	2.1.332	2.1.332	no	@anthropic-ai/claude-code@2.1.332 exact optional pin	https://registry.npmjs.org/%40anthropic-ai%2Fclaude-code-darwin-arm64/latest
+@anthropic-ai/claude-code-darwin-x64	2.1.332	2.1.332	no	@anthropic-ai/claude-code@2.1.332 exact optional pin	https://registry.npmjs.org/%40anthropic-ai%2Fclaude-code-darwin-x64/latest
+@anthropic-ai/claude-code-linux-arm64	2.1.332	2.1.332	no	@anthropic-ai/claude-code@2.1.332 exact optional pin	https://registry.npmjs.org/%40anthropic-ai%2Fclaude-code-linux-arm64/latest
+@anthropic-ai/claude-code-linux-arm64-musl	2.1.332	2.1.332	no	@anthropic-ai/claude-code@2.1.332 exact optional pin	https://registry.npmjs.org/%40anthropic-ai%2Fclaude-code-linux-arm64-musl/latest
+@anthropic-ai/claude-code-linux-x64	2.1.332	2.1.332	yes	@anthropic-ai/claude-code@2.1.332 exact optional pin	https://registry.npmjs.org/%40anthropic-ai%2Fclaude-code-linux-x64/latest
+@anthropic-ai/claude-code-linux-x64-musl	2.1.332	2.1.332	no	@anthropic-ai/claude-code@2.1.332 exact optional pin	https://registry.npmjs.org/%40anthropic-ai%2Fclaude-code-linux-x64-musl/latest
+@anthropic-ai/claude-code-win32-arm64	2.1.332	2.1.332	no	@anthropic-ai/claude-code@2.1.332 exact optional pin	https://registry.npmjs.org/%40anthropic-ai%2Fclaude-code-win32-arm64/latest
+@anthropic-ai/claude-code-win32-x64	2.1.332	2.1.332	no	@anthropic-ai/claude-code@2.1.332 exact optional pin	https://registry.npmjs.org/%40anthropic-ai%2Fclaude-code-win32-x64/latest
+@github/keytar	7.10.6	7.10.6	yes	@google/gemini-cli@0.71.1 exact optional pin; deprecated by publisher; migration tracked in Gemini CLI #30285	https://registry.npmjs.org/%40github%2Fkeytar/latest
+@google/gemini-cli	0.71.1	0.71.1	yes		https://registry.npmjs.org/%40google%2Fgemini-cli/latest
+@img/colour	1.1.0	1.1.0	yes		https://registry.npmjs.org/%40img%2Fcolour/latest
+@img/sharp-darwin-arm64	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-darwin-arm64/latest
+@img/sharp-darwin-x64	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-darwin-x64/latest
+@img/sharp-freebsd-wasm32	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-freebsd-wasm32/latest
+@img/sharp-libvips-darwin-arm64	1.3.4	1.3.4	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-darwin-arm64/latest
+@img/sharp-libvips-darwin-x64	1.3.4	1.3.4	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-darwin-x64/latest
+@img/sharp-libvips-linux-arm	1.3.4	1.3.4	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-linux-arm/latest
+@img/sharp-libvips-linux-arm64	1.3.4	1.3.4	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-linux-arm64/latest
+@img/sharp-libvips-linux-ppc64	1.3.4	1.3.4	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-linux-ppc64/latest
+@img/sharp-libvips-linux-riscv64	1.3.4	1.3.4	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-linux-riscv64/latest
+@img/sharp-libvips-linux-s390x	1.3.4	1.3.4	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-linux-s390x/latest
+@img/sharp-libvips-linux-x64	1.3.4	1.3.4	yes	@img/sharp-linux-x64@0.35.5 exact optional pin; sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-linux-x64/latest
+@img/sharp-libvips-linuxmusl-arm64	1.3.4	1.3.4	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-linuxmusl-arm64/latest
+@img/sharp-libvips-linuxmusl-x64	1.3.4	1.3.4	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-libvips-linuxmusl-x64/latest
+@img/sharp-linux-arm	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-linux-arm/latest
+@img/sharp-linux-arm64	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-linux-arm64/latest
+@img/sharp-linux-ppc64	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-linux-ppc64/latest
+@img/sharp-linux-riscv64	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-linux-riscv64/latest
+@img/sharp-linux-s390x	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-linux-s390x/latest
+@img/sharp-linux-x64	0.35.5	0.35.5	yes	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-linux-x64/latest
+@img/sharp-linuxmusl-arm64	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-linuxmusl-arm64/latest
+@img/sharp-linuxmusl-x64	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-linuxmusl-x64/latest
+@img/sharp-webcontainers-wasm32	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-webcontainers-wasm32/latest
+@img/sharp-win32-arm64	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-win32-arm64/latest
+@img/sharp-win32-ia32	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-win32-ia32/latest
+@img/sharp-win32-x64	0.35.5	0.35.5	no	sharp@0.35.5 exact optional pin	https://registry.npmjs.org/%40img%2Fsharp-win32-x64/latest
+@lydell/node-pty	1.1.0	1.2.0-beta.18	yes	@google/gemini-cli@0.71.1 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty/latest
+@lydell/node-pty	1.2.0-beta.10	1.2.0-beta.18	yes	@qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty/latest
+@lydell/node-pty-darwin-arm64	1.1.0	1.2.0-beta.18	no	@google/gemini-cli@0.71.1 exact optional pin; @lydell/node-pty@1.1.0 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-darwin-arm64/latest
+@lydell/node-pty-darwin-arm64	1.2.0-beta.10	1.2.0-beta.18	no	@lydell/node-pty@1.2.0-beta.10 exact optional pin; @qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-darwin-arm64/latest
+@lydell/node-pty-darwin-x64	1.1.0	1.2.0-beta.18	no	@google/gemini-cli@0.71.1 exact optional pin; @lydell/node-pty@1.1.0 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-darwin-x64/latest
+@lydell/node-pty-darwin-x64	1.2.0-beta.10	1.2.0-beta.18	no	@lydell/node-pty@1.2.0-beta.10 exact optional pin; @qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-darwin-x64/latest
+@lydell/node-pty-linux-arm64	1.1.0	1.2.0-beta.18	no	@lydell/node-pty@1.1.0 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-linux-arm64/latest
+@lydell/node-pty-linux-arm64	1.2.0-beta.10	1.2.0-beta.18	no	@lydell/node-pty@1.2.0-beta.10 exact optional pin; @qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-linux-arm64/latest
+@lydell/node-pty-linux-x64	1.1.0	1.2.0-beta.18	yes	@google/gemini-cli@0.71.1 exact optional pin; @lydell/node-pty@1.1.0 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-linux-x64/latest
+@lydell/node-pty-linux-x64	1.2.0-beta.10	1.2.0-beta.18	yes	@lydell/node-pty@1.2.0-beta.10 exact optional pin; @qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-linux-x64/latest
+@lydell/node-pty-win32-arm64	1.1.0	1.2.0-beta.18	no	@google/gemini-cli@0.71.1 exact optional pin; @lydell/node-pty@1.1.0 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-win32-arm64/latest
+@lydell/node-pty-win32-arm64	1.2.0-beta.10	1.2.0-beta.18	no	@lydell/node-pty@1.2.0-beta.10 exact optional pin; @qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-win32-arm64/latest
+@lydell/node-pty-win32-x64	1.1.0	1.2.0-beta.18	no	@google/gemini-cli@0.71.1 exact optional pin; @lydell/node-pty@1.1.0 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-win32-x64/latest
+@lydell/node-pty-win32-x64	1.2.0-beta.10	1.2.0-beta.18	no	@lydell/node-pty@1.2.0-beta.10 exact optional pin; @qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40lydell%2Fnode-pty-win32-x64/latest
+@openai/codex	0.172.0	0.172.0	yes		https://registry.npmjs.org/%40openai%2Fcodex/latest
+@openai/codex-darwin-arm64	0.172.0-darwin-arm64	0.172.0-darwin-arm64	no	@openai/codex@0.172.0 exact optional pin; npm alias of the matching official @openai/codex platform release	https://registry.npmjs.org/%40openai%2Fcodex/0.172.0-darwin-arm64
+@openai/codex-darwin-x64	0.172.0-darwin-x64	0.172.0-darwin-x64	no	@openai/codex@0.172.0 exact optional pin; npm alias of the matching official @openai/codex platform release	https://registry.npmjs.org/%40openai%2Fcodex/0.172.0-darwin-x64
+@openai/codex-linux-arm64	0.172.0-linux-arm64	0.172.0-linux-arm64	no	@openai/codex@0.172.0 exact optional pin; npm alias of the matching official @openai/codex platform release	https://registry.npmjs.org/%40openai%2Fcodex/0.172.0-linux-arm64
+@openai/codex-linux-x64	0.172.0-linux-x64	0.172.0-linux-x64	yes	@openai/codex@0.172.0 exact optional pin; npm alias of the matching official @openai/codex platform release	https://registry.npmjs.org/%40openai%2Fcodex/0.172.0-linux-x64
+@openai/codex-win32-arm64	0.172.0-win32-arm64	0.172.0-win32-arm64	no	@openai/codex@0.172.0 exact optional pin; npm alias of the matching official @openai/codex platform release	https://registry.npmjs.org/%40openai%2Fcodex/0.172.0-win32-arm64
+@openai/codex-win32-x64	0.172.0-win32-x64	0.172.0-win32-x64	no	@openai/codex@0.172.0 exact optional pin; npm alias of the matching official @openai/codex platform release	https://registry.npmjs.org/%40openai%2Fcodex/0.172.0-win32-x64
+@oven/bun-darwin-aarch64	1.4.4	1.4.5	no	@qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40oven%2Fbun-darwin-aarch64/latest
+@oven/bun-darwin-x64	1.4.4	1.4.5	no	@qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40oven%2Fbun-darwin-x64/latest
+@oven/bun-linux-aarch64	1.4.4	1.4.5	no	@qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40oven%2Fbun-linux-aarch64/latest
+@oven/bun-linux-x64	1.4.4	1.4.5	yes	@qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40oven%2Fbun-linux-x64/latest
+@qwen-code/audio-capture	0.28.7	0.28.7	yes	@qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40qwen-code%2Faudio-capture/latest
+@qwen-code/qwen-code	0.28.7	0.28.7	yes		https://registry.npmjs.org/%40qwen-code%2Fqwen-code/latest
+@teddyzhu/clipboard	0.0.5	0.0.12	yes	@qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/%40teddyzhu%2Fclipboard/latest
+@teddyzhu/clipboard-darwin-arm64	0.0.5	0.0.12	no	@qwen-code/qwen-code@0.28.7 exact optional pin; @teddyzhu/clipboard@0.0.5 exact optional pin	https://registry.npmjs.org/%40teddyzhu%2Fclipboard-darwin-arm64/latest
+@teddyzhu/clipboard-darwin-x64	0.0.5	0.0.12	no	@qwen-code/qwen-code@0.28.7 exact optional pin; @teddyzhu/clipboard@0.0.5 exact optional pin	https://registry.npmjs.org/%40teddyzhu%2Fclipboard-darwin-x64/latest
+@teddyzhu/clipboard-linux-arm64-gnu	0.0.5	0.0.12	no	@qwen-code/qwen-code@0.28.7 exact optional pin; @teddyzhu/clipboard@0.0.5 exact optional pin	https://registry.npmjs.org/%40teddyzhu%2Fclipboard-linux-arm64-gnu/latest
+@teddyzhu/clipboard-linux-x64-gnu	0.0.5	0.0.12	yes	@qwen-code/qwen-code@0.28.7 exact optional pin; @teddyzhu/clipboard@0.0.5 exact optional pin	https://registry.npmjs.org/%40teddyzhu%2Fclipboard-linux-x64-gnu/latest
+@teddyzhu/clipboard-win32-arm64-msvc	0.0.5	0.0.12	no	@qwen-code/qwen-code@0.28.7 exact optional pin; @teddyzhu/clipboard@0.0.5 exact optional pin	https://registry.npmjs.org/%40teddyzhu%2Fclipboard-win32-arm64-msvc/latest
+@teddyzhu/clipboard-win32-x64-msvc	0.0.5	0.0.12	no	@qwen-code/qwen-code@0.28.7 exact optional pin; @teddyzhu/clipboard@0.0.5 exact optional pin	https://registry.npmjs.org/%40teddyzhu%2Fclipboard-win32-x64-msvc/latest
+detect-libc	2.1.2	2.1.2	yes		https://registry.npmjs.org/detect-libc/latest
+nan	2.30.0	2.30.0	yes		https://registry.npmjs.org/nan/latest
+node-addon-api	8.9.2	8.9.2	yes		https://registry.npmjs.org/node-addon-api/latest
+node-gyp-build	4.8.4	4.8.4	yes		https://registry.npmjs.org/node-gyp-build/latest
+node-pty	1.0.0	1.1.0	yes	@google/gemini-cli@0.71.1 exact optional pin	https://registry.npmjs.org/node-pty/latest
+opencode-ai	1.19.6	1.19.6	yes		https://registry.npmjs.org/opencode-ai/latest
+opencode-darwin-arm64	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-darwin-arm64/latest
+opencode-darwin-x64	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-darwin-x64/latest
+opencode-darwin-x64-baseline	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-darwin-x64-baseline/latest
+opencode-linux-arm64	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-linux-arm64/latest
+opencode-linux-arm64-musl	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-linux-arm64-musl/latest
+opencode-linux-x64	1.19.6	1.19.6	yes	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-linux-x64/latest
+opencode-linux-x64-baseline	1.19.6	1.19.6	yes	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-linux-x64-baseline/latest
+opencode-linux-x64-baseline-musl	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-linux-x64-baseline-musl/latest
+opencode-linux-x64-musl	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-linux-x64-musl/latest
+opencode-windows-arm64	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-windows-arm64/latest
+opencode-windows-x64	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-windows-x64/latest
+opencode-windows-x64-baseline	1.19.6	1.19.6	no	opencode-ai@1.19.6 exact optional pin	https://registry.npmjs.org/opencode-windows-x64-baseline/latest
+semver	7.8.6	7.8.6	yes		https://registry.npmjs.org/semver/latest
+sharp	0.35.5	0.35.5	yes	@qwen-code/qwen-code@0.28.7 exact optional pin	https://registry.npmjs.org/sharp/latest

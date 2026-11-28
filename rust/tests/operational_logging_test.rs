@@ -23,7 +23,7 @@ fn early_configuration_failure_has_a_durable_exit_record() {
         log.contains("process_exit") && log.contains("exit_code=2"),
         "{log}"
     );
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout.len(), 0);
     assert!(output.stderr.is_empty(), "{:?}", output.stderr);
 }
 
@@ -66,7 +66,7 @@ fn explicit_json_results_remain_machine_readable() {
     assert!(output.status.success());
     let result: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(result["data"]["version"], link_assistant_router::VERSION);
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr.len(), 0);
     assert!(home.path().join("data/logs/operational.log").exists());
 }
 
@@ -98,7 +98,7 @@ fn an_unusable_log_destination_reports_the_initialization_failure() {
         .output()
         .unwrap();
     assert_eq!(output.status.code(), Some(1));
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout.len(), 0);
     assert!(String::from_utf8_lossy(&output.stderr).contains("cannot initialize operational log"));
     assert_eq!(
         std::fs::read_to_string(home.path().join("logs")).unwrap(),

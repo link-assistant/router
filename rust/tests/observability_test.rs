@@ -178,7 +178,7 @@ async fn capture_is_opt_in_redacted_bounded_and_downloadable() {
         r#"{"error":"synthetic rejection","access_token":"secret","prompt":"synthetic prompt"}"#;
     let response = upstream(&state.request_log, "disabled", StatusCode::BAD_GATEWAY, raw).await;
     assert_eq!(response.text().await.unwrap(), raw);
-    assert!(errors.list().unwrap().is_empty());
+    assert_eq!(errors.list().unwrap().len(), 0);
     state.request_log = Arc::new(
         link_assistant_router::request_log::RequestLog::new(
             dir.path().join("requests"),
@@ -250,8 +250,8 @@ async fn capture_is_opt_in_redacted_bounded_and_downloadable() {
     *req.method_mut() = http::Method::DELETE;
     let response = app.oneshot(req).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    assert!(state.request_log.lookup("lookup").unwrap().is_empty());
-    assert!(errors.list().unwrap().is_empty());
+    assert_eq!(state.request_log.lookup("lookup").unwrap().len(), 0);
+    assert_eq!(errors.list().unwrap().len(), 0);
     assert!(dir.path().join("keep").exists());
     assert!(
         std::fs::read_to_string(audit)
@@ -354,7 +354,7 @@ async fn oversized_capture_omits_incomplete_json_and_clear_invalidates_in_flight
     let pending = upstream(&log, "pending", StatusCode::BAD_GATEWAY, "error").await;
     errors.clear().unwrap();
     pending.bytes().await.unwrap();
-    assert!(errors.list().unwrap().is_empty());
+    assert_eq!(errors.list().unwrap().len(), 0);
     assert!(errors.read("../secret").is_err());
 }
 
@@ -382,7 +382,7 @@ async fn abandoned_error_is_marked_incomplete_and_zero_budget_writes_nothing() {
         drop(response);
         let files = errors.list().unwrap();
         if budget == 0 {
-            assert!(files.is_empty());
+            assert_eq!(files.len(), 0);
             assert!(!dir.path().join("errors-0").exists());
         } else {
             let name = files[0]["name"].as_str().unwrap();
@@ -590,7 +590,7 @@ fn log_lookup_download_and_clear_ignore_symlinks_and_unrelated_files() {
     symlink(&outside, requests.join("token/requests.lino")).unwrap();
     symlink(dir.path(), requests.join("external")).unwrap();
     let log = link_assistant_router::request_log::RequestLog::new(requests, 4096);
-    assert!(log.lookup("private").unwrap().is_empty());
+    assert_eq!(log.lookup("private").unwrap().len(), 0);
     log.clear().unwrap();
     assert!(outside.exists());
     let errors = dir.path().join("errors");
@@ -599,7 +599,7 @@ fn log_lookup_download_and_clear_ignore_symlinks_and_unrelated_files() {
     symlink(&outside, errors.join(&name)).unwrap();
     std::fs::write(errors.join("unrelated.txt"), "keep").unwrap();
     let log = ErrorLog::new(errors.clone(), 400);
-    assert!(log.list().unwrap().is_empty());
+    assert_eq!(log.list().unwrap().len(), 0);
     assert!(log.read(&name).is_err());
     log.clear().unwrap();
     assert!(outside.exists());

@@ -172,14 +172,14 @@ fn unbounded_vendor_cooldown_is_clamped_without_panicking() {
         .cooldown_remaining
         .expect("bounded cooldown");
     assert!(remaining <= crate::request_routing::MAX_RETRY_AFTER);
-    assert!(remaining > Duration::from_secs(23 * 60 * 60));
+    assert!(remaining > Duration::from_hours(23));
 }
 
 #[test]
 fn configured_cooldown_is_not_capped_as_an_untrusted_vendor_hint() {
     let directory = tempdir("configured-cooldown");
     write_creds(&directory, "token");
-    let configured = Duration::from_secs(48 * 60 * 60);
+    let configured = Duration::from_hours(48);
     let router = AccountRouter::new(directory, &[], SelectionStrategy::RoundRobin, configured);
 
     router.report_failure_with_retry_after(
@@ -190,7 +190,7 @@ fn configured_cooldown_is_not_capped_as_an_untrusted_vendor_hint() {
     let remaining = router.health_snapshot()[0]
         .cooldown_remaining
         .expect("configured cooldown");
-    assert!(remaining > Duration::from_secs(47 * 60 * 60));
+    assert!(remaining > Duration::from_hours(47));
     assert!(remaining <= configured);
 }
 

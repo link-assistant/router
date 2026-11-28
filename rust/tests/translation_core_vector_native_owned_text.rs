@@ -23,6 +23,6 @@ fn output_strings_have_independent_owned_buffers_without_a_new_text_size_limit()
             assert_ne!(result[0].as_ptr(), seed.as_ptr());
             assert_ne!(result[0].as_ptr(), result[1].as_ptr());
         }
-        assert!(values(false, seed).is_empty());
+        assert_eq!(values(false, seed).len(), 0);
     }
 }

@@ -61,7 +61,7 @@ fn aliases_deduplicate_to_nominal_records_and_sort_independently_of_insertion_or
             detached.reverse();
             detached.clear();
             assert_eq!(policy.overrides(), expected_records());
-            assert!(policy.proxied_clients().is_empty());
+            assert_eq!(policy.proxied_clients().len(), 0);
         }
     }
 }

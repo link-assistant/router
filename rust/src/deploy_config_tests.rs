@@ -275,7 +275,7 @@ fn no_settings_need_no_payload_and_change_nothing() {
     assert!(!resolved.needs_payload());
     assert!(!resolved.tokens.is_limited());
     assert_eq!(merged.known_hosts().unwrap(), None);
-    assert!(resolved.tokens.issue_arguments().is_empty());
+    assert_eq!(resolved.tokens.issue_arguments().len(), 0);
 }
 
 #[test]

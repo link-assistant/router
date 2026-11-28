@@ -3,7 +3,6 @@
 //! target is needed (issues #679, #680, #683).
 #![cfg(unix)]
 
-use std::os::unix::fs::PermissionsExt as _;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::time::{Duration, Instant};
@@ -23,14 +22,9 @@ impl Fake {
     fn new(body: &str) -> Self {
         let directory = tempfile::tempdir().unwrap();
         let ssh = directory.path().join("ssh");
-        std::fs::write(
-            &ssh,
-            format!(
-                "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$0.arguments\"\ncat > \"$0.input\"\n{body}\n"
-            ),
-        )
-        .unwrap();
-        std::fs::set_permissions(&ssh, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/fake-ssh.sh");
+        std::fs::write(ssh.with_extension("body"), format!("{body}\n")).unwrap();
+        std::os::unix::fs::symlink(fixture, &ssh).unwrap();
         Self { directory }
     }
 

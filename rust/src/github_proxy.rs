@@ -518,8 +518,7 @@ pub async fn proxy(State(state): State<AppState>, request: Request) -> Response 
     // the claims. Re-reading them here is what lets a token carry a repository
     // scope (issue #262); an admin credential yields unrestricted claims.
     let scope = crate::proxy::authenticate_client_error(&state, request.headers())
-        .map(|claims| claims.github_repos)
-        .unwrap_or_default();
+        .map_or_default(|claims| claims.github_repos);
     forward(
         &state.client,
         &state.github,

@@ -214,8 +214,8 @@ fn the_plan_is_read_only() {
     });
 
     assert_eq!(code, ExitCode::SUCCESS);
-    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
-    assert!(host.world().spawned_ports.is_empty());
+    assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
+    assert_eq!(host.world().spawned_ports.len(), 0);
     assert!(State::new(root.path()).host().unwrap().is_none());
     assert!(running(&runner, &RELAY) && running(&runner, &backend));
 }
@@ -236,8 +236,8 @@ fn open_connections_and_live_runs_refuse_the_move_before_anything_changes() {
         run(&runner, &host, root.path(), host_mode),
         ExitCode::from(2)
     );
-    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
-    assert!(host.world().spawned_ports.is_empty());
+    assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
+    assert_eq!(host.world().spawned_ports.len(), 0);
 
     runner.0.lock().unwrap().connection_counts.clear();
     runner.0.lock().unwrap().token_inventory = r#"[{"id":"run-1","label":"claude","issued_at":1,"expires_at":4102444800,"revoked":false,"ephemeral":true,"run_lease_expires_at":4102444800,"model_policy":{"allowed_models":["glm-5"]}}]"#.into();
@@ -245,8 +245,8 @@ fn open_connections_and_live_runs_refuse_the_move_before_anything_changes() {
         run(&runner, &host, root.path(), host_mode),
         ExitCode::from(2)
     );
-    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
-    assert!(host.world().spawned_ports.is_empty());
+    assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
+    assert_eq!(host.world().spawned_ports.len(), 0);
     assert!(State::new(root.path()).host().unwrap().is_none());
 }
 
@@ -280,7 +280,7 @@ fn a_validated_candidate_takes_over_the_stable_listener_and_the_containers_come_
     runner.0.lock().unwrap().commands.clear();
     assert_eq!(run(&runner, &host, root.path(), |_| {}), ExitCode::SUCCESS);
     assert_eq!(host.world().spawned_ports.len(), 2);
-    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
+    assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
     assert_eq!(
         run(&runner, &host, root.path(), |args| args.status = true),
         ExitCode::SUCCESS
@@ -315,7 +315,7 @@ fn a_candidate_rejecting_the_deployment_tokens_changes_nothing() {
 
     assert_eq!(host.world().spawned_ports, [CANDIDATE_PORT]);
     assert!(host.world().processes.is_empty());
-    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
+    assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
     assert!(running(&runner, &RELAY) && running(&runner, &backend));
     assert!(State::new(root.path()).host().unwrap().is_none());
 }
@@ -359,7 +359,7 @@ fn host_mode_without_containers_down_and_refusals() {
         ExitCode::from(2)
     );
     host.world().foreign_listener = false;
-    assert!(host.world().spawned_ports.is_empty());
+    assert_eq!(host.world().spawned_ports.len(), 0);
 
     assert_eq!(
         run(&runner, &host, root.path(), host_mode),
@@ -408,7 +408,7 @@ fn the_return_plan_is_read_only() {
     });
 
     assert_eq!(code, ExitCode::SUCCESS);
-    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
+    assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
     assert_eq!(host.world().processes.len(), 1);
     assert!(State::new(root.path()).host().unwrap().is_some());
     assert!(!running(&runner, &RELAY) && !running(&runner, &backend));
@@ -508,8 +508,8 @@ fn the_plan_predicts_the_data_checkpoint() {
         run(&runner, &host, root.path(), host_mode),
         ExitCode::from(2)
     );
-    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
-    assert!(host.world().spawned_ports.is_empty());
+    assert_eq!(mutations(&runner.0.lock().unwrap()).len(), 0);
+    assert_eq!(host.world().spawned_ports.len(), 0);
 }
 
 /// Issue #659: without `TOKEN_SECRET`, a host serving this build is neither
@@ -525,7 +525,7 @@ fn status_without_the_secret_reports_unknown_convergence_and_no_plan() {
     );
     let mut status = super::coordinator(runner.clone(), root.path(), "router:1", 8080, false);
     let (steps, convergence) = status.host_status_summary(&host).unwrap();
-    assert!(steps.is_empty());
+    assert_eq!(steps.len(), 0);
     assert_eq!(convergence, "converged=true");
 
     let placeholder = link_assistant_router::token_secret::placeholder("status");

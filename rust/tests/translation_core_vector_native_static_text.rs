@@ -14,7 +14,7 @@ fn static_values_reuse_original_borrowed_storage() {
         assert_eq!(result, [seed, seed, "Ω😀"]);
         assert_eq!(result[0].as_ptr(), seed.as_ptr());
         assert_eq!(result[1].as_ptr(), seed.as_ptr());
-        assert!(values(false, seed).is_empty());
+        assert_eq!(values(false, seed).len(), 0);
     }
 }
 #[test]

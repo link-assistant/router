@@ -20,9 +20,28 @@ function exact(a,b,depth=0){if(Object.is(a,b))return true;if(depth>=64||!a||!b||
 const reviewedDraftSupplementals=new Map(readFixedNineDraftWorkflowSources().files.filter(row=>draftSupplementNames.has(path.basename(row.path))).map(row=>{
  const document=parseDocument(row.after,{uniqueKeys:true,version:'1.2'});if(document.errors.length)throw TypeError('Fixed-nine reviewed workflow grammar differs');return [path.basename(row.path),document.toJS()];
 }));
+const manualBaseCoverageInput = {
+  description: 'Measure full coverage of the selected base with the current toolchain',
+  type: 'boolean',
+  default: false,
+};
+
+function reviewedSupplementTrigger(name, workflow, reviewed) {
+  if (name !== 'benchmarks.yml') return exact(workflow.on, reviewed.on);
+  const coverageMode = workflow.jobs?.compare?.env?.MEASURE_BASE_COVERAGE;
+  const dispatchInputs = workflow.on?.workflow_dispatch?.inputs ?? {};
+  if (!Object.hasOwn(dispatchInputs, 'measure_base_coverage')) {
+    return exact(workflow.on, reviewed.on) && coverageMode === undefined;
+  }
+  const expected = structuredClone(reviewed.on);
+  expected.workflow_dispatch.inputs.measure_base_coverage = manualBaseCoverageInput;
+  return exact(workflow.on, expected) &&
+    coverageMode === "${{ github.event_name == 'workflow_dispatch' && inputs.measure_base_coverage }}";
+}
+
 function auditDraftSupplement(name,workflow,errors){
  const reviewed=reviewedDraftSupplementals.get(name),trigger=workflow.on?.pull_request;
- if(!exact(trigger?.types,DRAFT_SUPPLEMENT_PR_TYPES)||!exact(workflow.on,reviewed.on))errors.push(`${name}: fixed-nine reviewed PR activities/paths and other triggers differ`);
+ if(!exact(trigger?.types,DRAFT_SUPPLEMENT_PR_TYPES)||!reviewedSupplementTrigger(name,workflow,reviewed))errors.push(`${name}: fixed-nine reviewed PR activities/paths and other triggers differ`);
  if(workflow.jobs?.javascript?.if!==DRAFT_SUPPLEMENT_CONDITION||!exact(workflow.jobs?.javascript,reviewed.jobs.javascript))errors.push(`${name}/javascript: exact fixed-nine draft caller gate missing`);
 }
 
@@ -129,7 +148,7 @@ export function auditWorkflows(sources) {
       if(id==='translation-freshness'){
         if(job?.['timeout-minutes']!==60||Object.hasOwn(job??{},'needs')||Object.hasOwn(job??{},'strategy'))errors.push(`${gateName}/${id}: independent unconditional original freshness job required`);
         for(const command of required[id])if(runs.filter(run=>run===command).length!==1)errors.push(`${gateName}/${id}: original freshness must run exactly once`);
-        const uploads=(job?.steps??[]).filter(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+        const uploads=(job?.steps??[]).filter(step=>step.uses==='actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9');
         const upload=uploads.length===1?uploads[0]:null;
         const valid=upload&&!Object.hasOwn(upload,'run')&&job.steps.at(-1)===upload&&upload.if==='${{ always() }}'&&!upload['continue-on-error']&&upload.with?.name==='bulk-drafts-${{ inputs.sha }}'&&upload.with?.path==='js/node_modules/.bulk-drafts/'&&upload.with?.['include-hidden-files']===true&&upload.with?.['if-no-files-found']==='error'&&upload.with?.['retention-days']===7&&job.env?.ROUTER_BULK_DRAFT_DIRECTORY==='js/node_modules/.bulk-drafts';
         if(!valid)errors.push(`${gateName}/${id}: missing mandatory command evidence: complete unqualified canonical draft custody missing`);
@@ -151,14 +170,14 @@ export function auditWorkflows(sources) {
         for(const command of required[id])if(runs.filter(run=>run===command).length!==1)errors.push(`${gateName}/${id}: mandatory matrix command must run exactly once`);
         const other=id==='profile-matrix'?'owned-profile-matrix':'profile-matrix';
         if(runs.some(run=>required[other].includes(run)))errors.push(`${gateName}/${id}: independent original 60-minute matrix job cannot contain the other complete check`);
-        const uploads=(job?.steps??[]).filter(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+        const uploads=(job?.steps??[]).filter(step=>step.uses==='actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9');
         const upload=uploads.length===1?uploads[0]:null;
         const valid=upload&&!Object.hasOwn(upload,'run')&&job.steps.at(-1)===upload&&upload.if==='${{ always() }}'&&!upload['continue-on-error']&&upload.with?.name===artifact&&upload.with?.path==='js/node_modules/.matrix-drafts/'&&upload.with?.['include-hidden-files']===true&&upload.with?.['if-no-files-found']==='error'&&upload.with?.['retention-days']===7&&job.env?.ROUTER_MATRIX_DRAFT_DIRECTORY==='js/node_modules/.matrix-drafts';
         if(!valid)errors.push(`${gateName}/${id}: missing mandatory command evidence: complete unqualified matrix draft custody missing`);
         else matrixEvidenceUpload=upload;
       }
       if (['typescript', 'translation', 'reverse-translation', 'reverse-bun'].includes(id)) {
-        const uploads = (job?.steps ?? []).filter(step => step.uses === 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+        const uploads = (job?.steps ?? []).filter(step => step.uses === 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9');
         const upload = uploads.length === 1 ? uploads[0] : null;
         const evidencePath = id === 'reverse-translation' ? 'js/node_modules/.node-case-deadlines/\n' : id === 'reverse-bun' ? 'js/node_modules/.bun-reverse-files/\n' : 'js/node_modules/.node-case-deadlines/';
         const evidenceName='node-case-deadlines-${{ github.job }}-${{ inputs.sha }}'+(['translation','reverse-translation','reverse-bun'].includes(id)?'-${{ matrix.shard }}':'');
@@ -185,7 +204,7 @@ export function auditWorkflows(sources) {
         if (step.uses?.startsWith('actions/checkout@') && step.with?.ref !== '${{ inputs.sha }}') errors.push(`${gateName}/${id}: checkout must use inputs.sha`);
         if (/\b(?:cargo|rustc|rust-script|clippy-driver)\b|rust-toolchain|docker\/(?:build|setup-buildx)/.test(`${step.uses ?? ''}\n${step.run ?? ''}`)) errors.push(`${gateName}/${id}: Rust must not execute inside JavaScript gate`);
       }
-      if (['lint', 'bun-tests', 'typescript', 'translation', 'translation-freshness', 'reverse-translation', 'reverse-bun', 'reverse-freshness'].includes(id) && !(job?.steps ?? []).some(step => step.uses === 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6' && step.with?.['bun-version'] === '1.4.3')) errors.push(`${gateName}/${id}: required pinned Bun runtime missing`);
+      if (['lint', 'bun-tests', 'typescript', 'translation', 'translation-freshness', 'reverse-translation', 'reverse-bun', 'reverse-freshness'].includes(id) && !(job?.steps ?? []).some(step => step.uses === 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6' && step.with?.['bun-version'] === '1.4.5')) errors.push(`${gateName}/${id}: required pinned Bun runtime missing`);
       if (!(job?.steps ?? []).some(step => step.uses?.startsWith('actions/checkout@'))) errors.push(`${gateName}/${id}: immutable checkout missing`);
     }
     const manifest = JSON.parse(fs.readFileSync(new URL('../parity/router-features.json', import.meta.url), 'utf8'));

@@ -67,12 +67,15 @@ Router CLI, or set `ROUTER_BIN` in the context's environment, before deploying
 host mode. Router validates that executable's `--version` response and uses its
 actual version in status, convergence and saved service state. Without explicit
 selection, only a running Router CLI supplies its own executable. The
-[independent consumer example](../../examples/host_library_consumer.rs) rejects
+[independent consumer example](../../rust/examples/host_library_consumer.rs) rejects
 Router CLI arguments itself and exercises real plan/apply/status/stop:
 
 ```sh
-cargo build --locked --bins
-cargo test --locked --example host_library_consumer
+cargo test --locked --test host_library_consumer
 ```
+
+To run the example directly, build the Router CLI and run the example with the
+same Cargo target directory and profile. Set `ROUTER_BIN` to use a CLI at a
+different path.
 
 Contracts and package exports are regenerated from Rust and checked in CI. See the [compatibility policy](compatibility.md), [requirement matrix and component research](issue-697-requirements.md), and [testing tiers](../testing-tiers.md). Registry publication and all downloadable integrations share the exact-tag provenance and complete-delivery release gate.

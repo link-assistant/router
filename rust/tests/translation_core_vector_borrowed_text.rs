@@ -17,6 +17,6 @@ fn repeated_borrows_keep_values_and_original_storage() {
     for value in values {
         assert!(std::ptr::eq(value.as_ptr(), owner.as_ptr()));
     }
-    assert!(empty(&owner).is_empty());
+    assert_eq!(empty(&owner).len(), 0);
     assert_eq!(fixed(), ["Ω😀", "Ω😀"]);
 }

@@ -186,7 +186,6 @@ async fn execute(
 ///
 /// Exits 2 for an unknown id, as the local path does, so a script's meaning is
 /// the same against either target.
-#[must_use]
 pub fn show_one(
     records: &[crate::translation_core::Json],
     id: &crate::translation_core::Str,

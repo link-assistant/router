@@ -282,7 +282,10 @@ mod tests {
         assert!(applicable.contains("__cflb=old"));
         assert!(!applicable.contains("_cfuvid=host"));
         assert!(!get(&store, &url("https://a.chatgpt.com/other")).contains("cf_chl_path"));
-        assert!(get(&store, &url("http://a.chatgpt.com/backend-api/codex")).is_empty());
+        assert_eq!(
+            get(&store, &url("http://a.chatgpt.com/backend-api/codex")).len(),
+            0
+        );
 
         set(
             &store,
@@ -327,7 +330,7 @@ mod tests {
             &source,
             &["cf_chl_expired=gone; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure"],
         );
-        assert!(get(&expired, &source).is_empty());
+        assert_eq!(get(&expired, &source).len(), 0);
     }
 
     #[test]

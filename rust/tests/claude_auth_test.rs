@@ -74,7 +74,7 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
         claude_home: home.path().into(),
         scopes: CLAUDE_SCOPES.into(),
     };
-    let login = ClaudeLogin::begin_persisted(config.clone(), Duration::from_secs(900)).unwrap();
+    let login = ClaudeLogin::begin_persisted(config.clone(), Duration::from_mins(15)).unwrap();
     let state = reqwest::Url::parse(login.authorization_url())
         .unwrap()
         .query_pairs()

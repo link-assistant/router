@@ -517,13 +517,12 @@ fn codex_account_pin(
         .map_or_else(
             || {
                 codex_reader_for_account(state, crate::credential_recovery_store::PRIMARY_ACCOUNT)
-                    .map(|reader| {
+                    .map_or_default(|reader| {
                         vec![(
                             crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
                             reader,
                         )]
                     })
-                    .unwrap_or_default()
             },
             crate::accounts::AccountRouter::subscription_readers,
         );

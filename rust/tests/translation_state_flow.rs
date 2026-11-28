@@ -56,10 +56,8 @@ fn nested_callbacks_keep_shadowed_binding_and_capture_identity() {
         json_from_values(inner)
     });
     assert_eq!(repeated, vec![serde_json::json!([null, false, ""]); 3]);
-    assert!(
-        json_filter(&[Json::Null], |_value| json_any(&[Json::Null], |value| {
-            !value.is_null()
-        }))
-        .is_empty()
-    );
+    let filtered = json_filter(&[Json::Null], |_value| {
+        json_any(&[Json::Null], |value| !value.is_null())
+    });
+    assert_eq!(filtered.len(), 0);
 }
