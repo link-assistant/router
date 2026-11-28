@@ -25,7 +25,7 @@ pub fn try_parse_arguments(arguments: Vec<OsString>) -> Result<Cli, clap::Error>
     cli_from_matches(&matches)
 }
 
-pub(crate) fn try_parse_invocation(
+pub fn try_parse_invocation(
     arguments: Vec<OsString>,
 ) -> Result<(Cli, Option<Arc<RuntimeConfig>>), clap::Error> {
     let command = argument_command(&arguments);

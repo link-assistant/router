@@ -13,10 +13,10 @@ use tower_http::cors::CorsLayer;
 
 use crate::cli::Cli;
 
-pub(crate) mod api;
+pub mod api;
 mod cli_settings;
-pub(crate) mod cors;
-pub(crate) mod egress;
+pub mod cors;
+pub mod egress;
 mod payload;
 mod pointer;
 mod redaction;
@@ -30,7 +30,7 @@ struct Shape {
     payload: payload::Payload,
 }
 
-pub(super) fn schema() -> &'static Value {
+fn schema() -> &'static Value {
     static SCHEMA: OnceLock<Value> = OnceLock::new();
     SCHEMA.get_or_init(|| {
         let mut schema = schemars::schema_for!(Shape).to_value();
@@ -66,7 +66,7 @@ impl Live {
 }
 
 /// Configuration selected for one Router instance.
-pub(crate) struct RuntimeConfig {
+pub struct RuntimeConfig {
     path: PathBuf,
     audit_path: PathBuf,
     boot: Value,
@@ -93,7 +93,7 @@ struct Disk {
 }
 
 #[derive(Debug)]
-pub(super) enum Edit {
+enum Edit {
     Replace(Value),
     Merge(Value),
     Put(Vec<String>, Value),
@@ -101,7 +101,7 @@ pub(super) enum Edit {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(super) enum Failure {
+enum Failure {
     Invalid(&'static str),
     Missing,
     Conflict(&'static str),
