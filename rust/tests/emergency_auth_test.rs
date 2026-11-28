@@ -237,7 +237,7 @@ fn expired_token() -> String {
     let jwt = jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &claims,
-        &jsonwebtoken::EncodingKey::from_secret(SECRET.as_bytes()),
+        &jsonwebtoken::EncodingKey::from_secret(SECRET.as_bytes()).unwrap(),
     )
     .expect("sign expired token");
     format!("la_sk_{jwt}")

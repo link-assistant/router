@@ -434,6 +434,7 @@ impl TokenManager {
         if crate::token_secret::is_placeholder(&self.secret) {
             return Err(jsonwebtoken::errors::ErrorKind::InvalidKeyFormat.into());
         }
+        let key = EncodingKey::from_secret(self.secret.as_bytes())?;
         if model_policy.validate().is_err() {
             return Err(jsonwebtoken::errors::ErrorKind::InvalidToken.into());
         }
@@ -457,11 +458,7 @@ impl TokenManager {
             client_kind,
             principal_id: request.principal_id.map(str::to_string),
         };
-        let jwt = encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(self.secret.as_bytes()),
-        )?;
+        let jwt = encode(&Header::default(), &claims, &key)?;
         // Persist a record so list/revoke survive restarts. Storage failures
         // are logged but do not block token issuance for in-memory tests.
         let record = TokenRecord {
@@ -670,12 +667,8 @@ impl TokenManager {
             validate_exp: false,
             ..Validation::default()
         };
-        decode::<TokenClaims>(
-            jwt,
-            &DecodingKey::from_secret(self.secret.as_bytes()),
-            &validation,
-        )
-        .ok()
+        let key = DecodingKey::from_secret(self.secret.as_bytes()).ok()?;
+        decode::<TokenClaims>(jwt, &key, &validation).ok()
     }
 
     /// Whether the store says this token is still live past its signed `exp`.
@@ -707,13 +700,8 @@ impl TokenManager {
             validate_exp: false,
             ..Validation::default()
         };
-        let claims = decode::<TokenClaims>(
-            jwt,
-            &DecodingKey::from_secret(self.secret.as_bytes()),
-            &validation,
-        )
-        .ok()?
-        .claims;
+        let key = DecodingKey::from_secret(self.secret.as_bytes()).ok()?;
+        let claims = decode::<TokenClaims>(jwt, &key, &validation).ok()?.claims;
         let expires_at = claims.exp;
         let issued_at = self
             .store

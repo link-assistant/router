@@ -7,7 +7,8 @@
 //! truncated to 128 bits: equal inputs give equal fingerprints, and nobody
 //! without the signing secret can test a guess against one.
 
-use jsonwebtoken::{Algorithm, EncodingKey};
+use hmac::{Hmac, KeyInit, Mac};
+use sha2::Sha256;
 
 const ENV_CONTEXT: &[u8] = b"link-assistant-router/deploy/runtime-env-fingerprint/v1\0";
 const VALUE_CONTEXT: &[u8] = b"link-assistant-router/deploy/provider-key-fingerprint/v1\0";
@@ -15,12 +16,9 @@ const VALUE_CONTEXT: &[u8] = b"link-assistant-router/deploy/provider-key-fingerp
 /// HMAC-SHA256 of `message` keyed by `key`, hex encoded.
 #[must_use]
 pub fn hmac_sha256_hex(key: &[u8], message: &[u8]) -> String {
-    let signature =
-        jsonwebtoken::crypto::sign(message, &EncodingKey::from_secret(key), Algorithm::HS256)
-            .expect("HMAC-SHA256 accepts any key");
-    let bytes = crate::translation_core::base64_url_no_pad_decode_owned_text(signature)
-        .expect("jsonwebtoken returns base64url");
-    hex::encode(bytes)
+    let mut mac = Hmac::<Sha256>::new_from_slice(key).expect("HMAC-SHA256 accepts any key length");
+    mac.update(message);
+    hex::encode(mac.finalize().into_bytes())
 }
 
 fn truncated(key: &str, message: &[u8]) -> String {

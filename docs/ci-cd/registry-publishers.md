@@ -88,6 +88,12 @@ correct `v1.25.4` upload with `expected the exact attested Python wheel and
 sdist`. It now selects exactly one wheel and the sdist by name. A missing
 or extra distribution still fails.
 
+PyPI can briefly return HTTP 404 for exact-version metadata after accepting
+the upload (issue #812). The post-upload verifier backs off for up to three
+minutes and makes a final lookup at the end of that window. An exact version
+that is still absent fails the job. Authentication and network errors fail
+immediately, and visible metadata must pass all identity and integrity checks.
+
 ## Retry an existing release
 
 After publisher configuration is repaired and this workflow is merged, run:
