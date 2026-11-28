@@ -103,10 +103,10 @@ test('base coverage is an explicit manual diagnostic and requires the gated base
 });
 
 test('coverage uses the current pull request label and a failed lookup blocks the gate', () => {
-  const coverage = parse(sources['release.yml']).jobs.coverage;
-  assert.equal(coverage.permissions?.['pull-requests'], 'read');
+  const workflow = parse(sources['release.yml']);
+  const coverage = workflow.jobs.coverage;
+  assert.deepEqual(coverage.permissions ?? workflow.permissions, { contents: 'read' });
   const gate = coverage.steps.find(step => step.name === 'Enforce coverage floor and ratchet');
-  assert.equal(gate.env.PR_NUMBER, '${{ github.event.pull_request.number }}');
   const commands = `
     gh() {
       [ "$1" = api ] && [ "$2" = repos/link-assistant/router/pulls/811 ] || return 42
@@ -121,6 +121,7 @@ test('coverage uses the current pull request label and a failed lookup blocks th
       env: {
         ...process.env, GITHUB_REPOSITORY: 'link-assistant/router', GITHUB_STEP_SUMMARY: 'summary.md',
         PR_NUMBER: number, CURRENT_LABEL: currentLabel, LOOKUP_STATUS: lookupStatus,
+        COVERAGE_EXCEPTION: currentLabel === 'true' ? 'false' : 'true',
         BASELINE_ARGUMENT: baseline,
       },
     },
@@ -142,6 +143,7 @@ test('coverage uses the current pull request label and a failed lookup blocks th
   const failed = run('811', 'true', '42', 'present');
   assert.equal(failed.status, 42);
   assert.equal(failed.stdout, '');
+  assert.equal(gate.env.PR_NUMBER, '${{ github.event.pull_request.number }}');
 });
 
 test('lane-introduced lint checks always run on the caller commit and elsewhere only when present', { timeout: 30_000 }, () => {
