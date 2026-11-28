@@ -18,6 +18,8 @@ impl TokenManager {
         if crate::token_secret::is_placeholder(&self.secret) {
             return Err(TokenError::IssuerSecretUnset);
         }
+        let key = DecodingKey::from_secret(self.secret.as_bytes())
+            .map_err(|_| TokenError::IssuerSecretUnset)?;
         let jwt = token_jwt(token).ok_or(TokenError::InvalidPrefix)?;
         let injected_time = crate::operation_context::current().and_then(|context| context.now);
         let mut validation = Validation::default();
@@ -25,8 +27,6 @@ impl TokenManager {
         // The decoder has no injectable clock. Keep signature/claim validation,
         // and enforce its same inclusive expiry leeway against the caller's time.
         validation.validate_exp = injected_time.is_none();
-        let key = DecodingKey::from_secret(self.secret.as_bytes())
-            .map_err(|error| TokenError::Invalid(error.to_string()))?;
         let token_data = decode::<TokenClaims>(jwt, &key, &validation)
             .and_then(|data| {
                 if injected_time
@@ -139,5 +139,28 @@ impl TokenManager {
     #[must_use]
     pub fn diagnostics(&self) -> &AuthDiagnostics {
         &self.diagnostics
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{TokenError, TokenManager};
+
+    #[test]
+    fn empty_secret_cannot_issue_or_validate_tokens() {
+        let manager = TokenManager::new("");
+        let error = manager.issue_token(24, "test").unwrap_err();
+        assert!(matches!(
+            error.kind(),
+            jsonwebtoken::errors::ErrorKind::InvalidKeyFormat
+        ));
+
+        let token = TokenManager::new("test-secret-for-unit-tests")
+            .issue_token(24, "test")
+            .unwrap();
+        assert!(matches!(
+            manager.validate_token(&token),
+            Err(TokenError::IssuerSecretUnset)
+        ));
     }
 }

@@ -30,14 +30,17 @@ use std::time::{Duration, Instant};
 
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
 
+const TERMINAL_COLS: NonZeroU16 = NonZeroU16::new(400).expect("terminal has columns");
+const TERMINAL_ROWS: NonZeroU16 = NonZeroU16::new(60).expect("terminal has rows");
+
 /// Terminal width used for spawned sessions.
 ///
 /// Deliberately very wide: the authorization URL is long, and a narrow
 /// terminal makes the child hard-wrap it across lines. Extraction can undo
 /// that (see [`crate::login_url`]), but not needing to is more reliable.
-pub const PTY_COLS: u16 = 400;
+pub const PTY_COLS: u16 = TERMINAL_COLS.get();
 /// Terminal height used for spawned sessions.
-pub const PTY_ROWS: u16 = 60;
+pub const PTY_ROWS: u16 = TERMINAL_ROWS.get();
 
 /// How often [`PtySession::wait_for`] re-evaluates its predicate.
 const POLL_INTERVAL: Duration = Duration::from_millis(50);
@@ -122,11 +125,7 @@ impl PtySession {
         let output = Arc::new(Mutex::new(Output {
             bytes: Vec::new(),
             last_write: Instant::now(),
-            screen: vt100::Parser::new(
-                NonZeroU16::new(PTY_ROWS).expect("nonzero terminal height"),
-                NonZeroU16::new(PTY_COLS).expect("nonzero terminal width"),
-                0,
-            ),
+            screen: vt100::Parser::new(TERMINAL_ROWS, TERMINAL_COLS, 0),
         }));
         let eof = Arc::new(AtomicBool::new(false));
 

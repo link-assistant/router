@@ -11,7 +11,6 @@
 //! traffic. Neither the secret nor the probe token reaches argv or output.
 
 use jsonwebtoken::{EncodingKey, Header};
-use link_assistant_router::deploy_config::hmac_sha256_hex;
 use link_assistant_router::storage::TokenRecord;
 
 use super::{Coordinator, LABEL_KEY};
@@ -26,7 +25,7 @@ const PROBE_SCRIPT: &crate::translation_core::Str = "const r=await fetch('http:/
 /// A keyed, truncated digest that identifies a secret without revealing it:
 /// HMAC-SHA256 keyed by the secret over a fixed context, first 128 bits.
 pub(super) fn fingerprint(secret: &crate::translation_core::Str) -> crate::translation_core::Text {
-    let digest = hmac_sha256_hex(secret.as_bytes(), FINGERPRINT_CONTEXT);
+    let digest = crate::deploy_config::hmac_sha256_hex(secret.as_bytes(), FINGERPRINT_CONTEXT);
     crate::translation_core::format!("hmac-sha256:{}", &digest[..32])
 }
 
@@ -203,8 +202,16 @@ mod tests {
     #[test]
     fn hmac_matches_the_published_vector() {
         assert_eq!(
-            hmac_sha256_hex(b"Jefe", b"what do ya want for nothing?"),
+            crate::deploy_config::hmac_sha256_hex(b"Jefe", b"what do ya want for nothing?"),
             "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"
+        );
+    }
+
+    #[test]
+    fn raw_fingerprints_accept_empty_hmac_keys() {
+        assert_eq!(
+            crate::deploy_config::hmac_sha256_hex(b"", b""),
+            "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad"
         );
     }
 

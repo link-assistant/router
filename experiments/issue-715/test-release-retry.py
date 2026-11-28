@@ -5,6 +5,7 @@ import contextlib
 import hashlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -115,12 +116,18 @@ class Distributions(unittest.TestCase):
             for name in [wheel, sdist, f'{wheel}.publish.attestation', f'{sdist}.publish.attestation']:
                 (dist/name).write_bytes(name.encode())
             record = {'info': {'name': 'link-assistant-router', 'version': version}, 'urls': [
-                {'filename': n, 'url': n, 'digests': {'sha256': hashlib.sha256(n.encode()).hexdigest()}, 'yanked': False}
+                {'filename': n, 'url': f'https://files.pythonhosted.org/{n}',
+                 'digests': {'sha256': hashlib.sha256(n.encode()).hexdigest()}, 'yanked': False}
                 for n in [wheel, sdist]]}
             installed = []
             argv = ['registry-distributions.py', 'python', '--version', version, '--assets', str(dist)]
-            network = (lambda _: record, lambda name: (dist/name).read_bytes())
-            with mock.patch.object(registry.python_identity, '__defaults__', network), \
+
+            def open_url(request, timeout):
+                if request.full_url == f'https://pypi.org/pypi/link-assistant-router/{version}/json':
+                    return io.BytesIO(json.dumps(record).encode())
+                return io.BytesIO((dist / request.full_url.rsplit('/', 1)[-1]).read_bytes())
+
+            with mock.patch.object(registry.urllib.request, 'urlopen', open_url), \
                     mock.patch.object(registry, 'install', lambda *call: installed.append(call)):
                 for extra, expected in [([], 'Verified registry hashes'), (['--probe'], 'present=true')]:
                     output = io.StringIO()
@@ -144,7 +151,14 @@ class Distributions(unittest.TestCase):
         workflow = (ROOT/'.github/workflows/release.yml').read_text()
         self.assertTrue('prepare-registry-retry:' in workflow, "missing retry job")
         self.assertIn('scripts/registry-distributions.py npm', workflow)
-        self.assertIn('scripts/registry-distributions.py python', workflow)
+        python = workflow.split('  publish-python:', 1)[1].split('  finalize-release:', 1)[0]
+        python_command = 'python3 scripts/registry-distributions.py python --version "$RELEASE_VERSION" --assets dist'
+        probe = python.index(f'{python_command} --probe >> "$GITHUB_OUTPUT"')
+        publish = python.index('uses: pypa/gh-action-pypi-publish@')
+        verify = python.index(f'{python_command}\n')
+        self.assertLess(probe, publish)
+        self.assertLess(publish, verify)
+        self.assertIn("if: steps.registry.outputs.present != 'true'", python[publish:verify])
         self.assertIn("needs.prepare-registry-retry.result == 'success'", workflow)
         final = workflow.split('  finalize-release:', 1)[1].split('  changelog-pr:', 1)[0]
         for required in ["needs.publish-npm.result == 'success'", "needs.publish-python.result == 'success'"]:
@@ -155,6 +169,119 @@ class Distributions(unittest.TestCase):
             self.assertTrue(required in prepare, f'retry lost identity verification: {required}')
         self.assertNotIn('cargo build', prepare)
         self.assertNotIn('gh release upload', prepare)
+
+
+class PyPIPropagation(unittest.TestCase):
+    version = '1.25.6'
+    metadata_url = f'https://pypi.org/pypi/link-assistant-router/{version}/json'
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.dist = Path(temporary.name)
+        self.urls = {}
+        for filename in [f'link_assistant_router-{self.version}-py3-none-any.whl',
+                         f'link_assistant_router-{self.version}.tar.gz']:
+            content = filename.encode()
+            (self.dist / filename).write_bytes(content)
+            self.urls[f'https://files.pythonhosted.org/{filename}'] = content
+        self.record = {
+            'info': {'name': 'link-assistant-router', 'version': self.version},
+            'urls': [
+                {'filename': url.rsplit('/', 1)[-1], 'url': url, 'yanked': False,
+                 'digests': {'sha256': hashlib.sha256(content).hexdigest()}}
+                for url, content in self.urls.items()
+            ],
+        }
+        self.read_metadata = mock.Mock(return_value=self.record)
+        self.requests = []
+        self.install = mock.Mock()
+        self.elapsed = 0
+        self.clock = mock.Mock()
+        self.clock.monotonic.side_effect = lambda: self.elapsed
+        self.clock.sleep.side_effect = self.advance_clock
+
+    def advance_clock(self, seconds):
+        self.elapsed += seconds
+
+    def http_error(self, status):
+        return urllib.error.HTTPError(self.metadata_url, status, 'test response', {}, None)
+
+    def open_url(self, request, timeout):
+        url = request.full_url
+        self.requests.append(url)
+        if url == self.metadata_url:
+            return io.BytesIO(json.dumps(self.read_metadata()).encode())
+        return io.BytesIO(self.urls[url])
+
+    def verify(self, *arguments):
+        argv = ['registry-distributions.py', 'python', '--version', self.version,
+                '--assets', str(self.dist), *arguments]
+        output = io.StringIO()
+        with mock.patch.object(sys, 'argv', argv), contextlib.redirect_stdout(output), \
+                mock.patch.object(registry, 'time', self.clock), \
+                mock.patch.object(registry.urllib.request, 'urlopen', self.open_url), \
+                mock.patch.object(registry, 'install', self.install):
+            registry.main()
+        return output.getvalue()
+
+    def test_post_publish_verifies_after_metadata_propagates(self):
+        self.read_metadata.side_effect = [self.http_error(404) for _ in range(3)] + [self.record]
+        self.assertIn('Verified registry hashes and ordinary exact-version python install', self.verify())
+        self.assertEqual(self.requests, [self.metadata_url] * 4 + list(self.urls))
+        self.assertEqual(self.clock.sleep.call_args_list, [mock.call(2), mock.call(4), mock.call(8)])
+        self.install.assert_called_once_with('python', self.version, mock.ANY)
+
+    def test_post_publish_fails_if_metadata_is_still_absent_after_timeout(self):
+        self.read_metadata.side_effect = self.raise_http_404
+        with self.assertRaisesRegex(ValueError, 'still absent after waiting 180 seconds'):
+            self.verify()
+        self.assertEqual(self.elapsed, 180)
+        self.assertEqual(self.clock.sleep.call_args_list,
+                         [mock.call(seconds) for seconds in [2, 4, 8, 16, 30, 30, 30, 30, 30]])
+        self.assertEqual(self.requests, [self.metadata_url] * 10)
+        self.install.assert_not_called()
+
+    def raise_http_404(self):
+        raise self.http_error(404)
+
+    def test_pre_publish_probe_reports_missing_after_one_lookup(self):
+        self.read_metadata.side_effect = [self.http_error(404)]
+        self.assertEqual(self.verify('--probe'), 'present=false\n')
+        self.assertEqual(self.requests, [self.metadata_url])
+        self.clock.sleep.assert_not_called()
+        self.install.assert_not_called()
+
+    def test_post_publish_does_not_retry_other_http_or_network_errors(self):
+        for error in [self.http_error(401), self.http_error(403), self.http_error(503),
+                      urllib.error.URLError('connection failed')]:
+            with self.subTest(error=error):
+                self.read_metadata.side_effect = [error, self.record]
+                with self.assertRaises(type(error)) as caught:
+                    self.verify()
+                self.assertIs(caught.exception, error)
+        self.assertEqual(self.requests, [self.metadata_url] * 4)
+        self.clock.sleep.assert_not_called()
+        self.install.assert_not_called()
+
+    def test_post_publish_does_not_retry_invalid_visible_metadata(self):
+        wheel, sdist = self.record['urls']
+        cases = [
+            (None, 'null metadata'),
+            ({**self.record, 'info': {**self.record['info'], 'version': '1.25.5'}}, 'wrong package identity'),
+            ({**self.record, 'urls': [wheel]}, 'distribution set differs'),
+            ({**self.record, 'urls': [wheel, sdist, {**wheel, 'filename': 'extra.whl'}]}, 'distribution set differs'),
+            ({**self.record, 'urls': [{**wheel, 'yanked': True}, sdist]}, 'distribution is yanked'),
+            ({**self.record, 'urls': [{**wheel, 'digests': {'sha256': 'bad'}}, sdist]}, 'differs from the attested asset'),
+        ]
+        for record, message in cases:
+            with self.subTest(message=message):
+                self.read_metadata.side_effect = [record, self.record]
+                with self.assertRaisesRegex(ValueError, message):
+                    self.verify()
+        self.assertEqual(self.requests, [self.metadata_url] * len(cases))
+        self.clock.sleep.assert_not_called()
+        self.install.assert_not_called()
 
 
 if __name__ == '__main__':

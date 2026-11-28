@@ -65,14 +65,15 @@ lino-arguments = "0.5"
 lino-objects-codec = "0.8.0"
 links-notation = "0.23.0"
 doublets = "0.9.0"
-# Persistent mapping needs the platform-mem 0.3 RawMem trait from doublets 0.9.
-# Later link-cli 1.x releases use platform-mem 0.4.
+# The persistent mapping must implement the same platform-mem 0.3 RawMem
+# trait as doublets 0.9. Later link-cli 1.x releases resolve platform-mem 0.4.
 link-cli = "=1.0.0"
 clap = { version = "4", features = ["derive", "env", "string"] }
 base64 = "0.23"
 async-trait = "0.1"
 sha2 = "0.11"
 hex = "0.4"
+hmac = "0.13"
 aes-gcm = "0.11"
 portable-pty = "0.9"
 os_info = "3.15.0"
