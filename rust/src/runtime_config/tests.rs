@@ -1,4 +1,6 @@
+use std::marker::PhantomData;
 use std::net::SocketAddr;
+use std::panic::{RefUnwindSafe, UnwindSafe};
 
 use axum::Router;
 use axum::body::{Body, to_bytes};
@@ -80,6 +82,14 @@ async fn call(
         .await
         .unwrap();
     (status, serde_json::from_slice(&bytes).unwrap())
+}
+
+#[test]
+fn public_types_keep_their_unwind_traits() {
+    fn assert_unwind_safe<T: RefUnwindSafe + UnwindSafe>(_: PhantomData<T>) {}
+
+    assert_unwind_safe(PhantomData::<crate::cli::Cli>);
+    assert_unwind_safe(PhantomData::<crate::request_log::RequestLog>);
 }
 
 #[test]

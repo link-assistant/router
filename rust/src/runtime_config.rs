@@ -69,8 +69,6 @@ impl Live {
 pub struct RuntimeConfig {
     path: PathBuf,
     audit_path: PathBuf,
-    input: cli_settings::Input,
-    operation: Option<crate::operation_context::OperationContext>,
     boot: Value,
     disk: Mutex<Disk>,
     live: RwLock<Live>,
@@ -85,6 +83,10 @@ impl std::fmt::Debug for RuntimeConfig {
 }
 
 struct Disk {
+    // Keep the parser and scoped dependencies behind the same poison boundary
+    // as the document they validate.
+    input: cli_settings::Input,
+    operation: Option<crate::operation_context::OperationContext>,
     seen: Option<String>,
     document: Value,
     error: Option<&'static str>,
@@ -155,10 +157,10 @@ impl RuntimeConfig {
         cli.runtime_config = Some(Arc::new(Self {
             path,
             audit_path,
-            input,
-            operation: crate::operation_context::current(),
             boot: document.clone(),
             disk: Mutex::new(Disk {
+                input,
+                operation: crate::operation_context::current(),
                 seen: bytes,
                 document,
                 error: None,
@@ -236,7 +238,7 @@ impl RuntimeConfig {
         let mut keys: std::collections::BTreeSet<_> = boot.collect();
         keys.extend(desired);
         for key in keys {
-            if self.input.overridden.contains(key) {
+            if disk.input.overridden.contains(key) {
                 if disk.document["cli"].get(key).is_some() {
                     overridden.push(key);
                 }
@@ -268,7 +270,7 @@ impl RuntimeConfig {
         if bytes == disk.seen && disk.error.is_none() {
             return Ok(());
         }
-        let result = self.read_candidate(bytes.as_deref());
+        let result = self.read_candidate(disk, bytes.as_deref());
         let (document, live) = match result {
             Ok(document) => document,
             Err(error) => {
@@ -320,7 +322,7 @@ impl RuntimeConfig {
         };
         redaction::restore_masks(&mut next, &disk.document);
         cli_settings::require_local_changes(&disk.document, &next).map_err(Failure::Invalid)?;
-        let live = self.validate(&next).map_err(Failure::Invalid)?;
+        let live = self.validate(&disk, &next).map_err(Failure::Invalid)?;
         let toml = storage::decode(disk.seen.as_deref().unwrap_or_default())
             .map_err(Failure::Invalid)?
             .0;
@@ -359,15 +361,19 @@ impl RuntimeConfig {
         .map_err(|_| Failure::Io)
     }
 
-    fn read_candidate(&self, bytes: Option<&str>) -> Result<(Value, Live), &'static str> {
+    fn read_candidate(
+        &self,
+        disk: &Disk,
+        bytes: Option<&str>,
+    ) -> Result<(Value, Live), &'static str> {
         let (_, document) = storage::decode(bytes.unwrap_or_default())?;
-        let live = self.validate(&document)?;
+        let live = self.validate(disk, &document)?;
         Ok((document, live))
     }
 
-    fn validate(&self, document: &Value) -> Result<Live, &'static str> {
+    fn validate(&self, disk: &Disk, document: &Value) -> Result<Live, &'static str> {
         let live = Live::from_document(document)?;
-        let cli = self.input.resolve(document)?;
+        let cli = disk.input.resolve(document)?;
         let configure = || {
             if let Some(destination) = cli.audit_log.as_deref() {
                 require_distinct_audit_path(&self.path, destination)?;
@@ -375,7 +381,7 @@ impl RuntimeConfig {
             cli.into_config()
                 .map_err(|_| "runtime configuration is invalid for this server")
         };
-        let config = self
+        let config = disk
             .operation
             .as_ref()
             .map_or_else(configure, |context| context.scope(configure))?;
@@ -392,11 +398,9 @@ impl RuntimeConfig {
             .live
             .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner) = live;
-        *disk = Disk {
-            seen: bytes,
-            document,
-            error: None,
-        };
+        disk.seen = bytes;
+        disk.document = document;
+        disk.error = None;
     }
 }
 
