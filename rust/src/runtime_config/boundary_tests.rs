@@ -9,8 +9,62 @@ use tower::ServiceExt as _;
 use crate::app_state::AppState;
 use crate::token::{ADMIN_SCOPE, CONFIG_WRITE_SCOPE, TokenClaims};
 
-use super::super::{Edit, egress, payload, storage};
+use super::super::{Edit, Failure, egress, payload, storage};
 use super::{ROOT, call, issue, state};
+
+#[test]
+fn the_audit_destination_cannot_overwrite_the_runtime_document() {
+    let root = tempfile::tempdir().unwrap();
+    let config_file = root.path().join("runtime.toml");
+    std::fs::create_dir(root.path().join("sub")).unwrap();
+    let mut context = crate::operation_context::OperationContext::isolated(root.path());
+    context.working_directory = root.path().to_path_buf();
+    context.environment.remove(std::ffi::OsStr::new("AUDIT_LOG"));
+    context.set_env("ROUTER_RUNTIME_CONFIG", config_file.as_os_str());
+
+    let start = || context.scope(|| crate::cli::try_parse_arguments(vec!["router".into()]));
+    let original = "[cli]\nport = 9084\n";
+    std::fs::write(&config_file, original).unwrap();
+    let live = start().unwrap().runtime_config.unwrap();
+    let diagnostic = "runtime configuration and audit log require different paths";
+
+    for destination in ["runtime.toml", "sub/../runtime.toml"] {
+        let document = format!("[cli]\naudit-log = '{destination}'\n");
+        std::fs::write(&config_file, &document).unwrap();
+        assert!(matches!(
+            start(),
+            Err(error) if error.to_string().contains(diagnostic)
+        ));
+        assert!(matches!(
+            live.reload_as("test"),
+            Err(Failure::Conflict(message)) if message == diagnostic
+        ));
+        assert_eq!(std::fs::read_to_string(&config_file).unwrap(), document);
+    }
+    assert_eq!(live.document(&[]).unwrap(), json!({"cli": {"port": 9084}}));
+
+    let parsed = context
+        .scope(|| {
+            crate::cli::try_parse_arguments(vec![
+                "router".into(),
+                "--audit-log".into(),
+                "router-audit.jsonl".into(),
+            ])
+        })
+        .unwrap();
+    assert_eq!(
+        parsed.audit_log.as_deref(),
+        Some(std::path::Path::new("router-audit.jsonl"))
+    );
+
+    std::fs::remove_file(&config_file).unwrap();
+    context.set_env("AUDIT_LOG", "sub/../runtime.toml");
+    assert!(matches!(
+        context.scope(|| crate::cli::try_parse_arguments(vec!["router".into()])),
+        Err(error) if error.to_string().contains(diagnostic)
+    ));
+    assert!(!config_file.exists());
+}
 
 #[tokio::test]
 async fn configuration_writers_cannot_change_host_authority() {

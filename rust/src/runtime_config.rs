@@ -137,9 +137,7 @@ impl RuntimeConfig {
             .map_or_else(|| data_dir.join("runtime.toml"), PathBuf::from);
         let path = absolute(path)?;
         let audit_path = absolute(data_dir.join("runtime-config-audit.jsonl"))?;
-        if path == audit_path || base.audit_log.as_ref().is_some_and(|audit| *audit == path) {
-            return Err("runtime configuration and audit log require different paths");
-        }
+        require_distinct_audit_path(&path, &audit_path)?;
         let bytes =
             storage::read(&path).map_err(|_| "could not read runtime configuration file")?;
         let input = cli_settings::Input::new(command, arguments, matches);
@@ -151,6 +149,9 @@ impl RuntimeConfig {
         } else {
             (base, json!({}), Live::default())
         };
+        if let Some(destination) = cli.audit_log.as_deref() {
+            require_distinct_audit_path(&path, destination)?;
+        }
         cli.runtime_config = Some(Arc::new(Self {
             path,
             audit_path,
@@ -367,23 +368,22 @@ impl RuntimeConfig {
     fn validate(&self, document: &Value) -> Result<Live, &'static str> {
         let live = Live::from_document(document)?;
         let cli = self.input.resolve(document)?;
-        let result = self.operation.as_ref().map_or_else(
-            || cli.into_config(),
-            |context| context.scope(|| cli.into_config()),
-        );
-        let config = result.map_err(|_| "runtime configuration is invalid for this server")?;
+        let configure = || {
+            if let Some(destination) = cli.audit_log.as_deref() {
+                require_distinct_audit_path(&self.path, destination)?;
+            }
+            cli.into_config()
+                .map_err(|_| "runtime configuration is invalid for this server")
+        };
+        let config = self
+            .operation
+            .as_ref()
+            .map_or_else(configure, |context| context.scope(configure))?;
         crate::management_config::ManagementConfig::validate_secrets(
             &config.token_secret,
             config.admin_key.as_deref(),
         )
         .map_err(|_| "runtime configuration includes a published example credential")?;
-        if config
-            .audit_log
-            .as_deref()
-            .is_some_and(|audit| Path::new(audit) == self.path)
-        {
-            return Err("runtime configuration and audit log require different paths");
-        }
         Ok(live)
     }
 
@@ -398,6 +398,29 @@ impl RuntimeConfig {
             error: None,
         };
     }
+}
+
+fn require_distinct_audit_path(path: &Path, destination: &Path) -> Result<(), &'static str> {
+    if destination.as_os_str().is_empty() {
+        return Ok(());
+    }
+    let destination = absolute(destination.to_path_buf())?;
+    if path == destination
+        || matches!(
+            (file_location(path), file_location(&destination)),
+            (Some(config_file), Some(audit_file)) if config_file == audit_file
+        )
+    {
+        return Err("runtime configuration and audit log require different paths");
+    }
+    Ok(())
+}
+
+fn file_location(path: &Path) -> Option<PathBuf> {
+    path.canonicalize().ok().or_else(|| {
+        let directory = path.parent()?.canonicalize().ok()?;
+        Some(directory.join(path.file_name()?))
+    })
 }
 
 fn absolute(path: PathBuf) -> Result<PathBuf, &'static str> {
