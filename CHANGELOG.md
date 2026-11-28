@@ -228,6 +228,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.25.8] - 2026-11-28
+
+### Fixed
+
+- Restore Rust compatibility with the current JWT and terminal parser APIs. Keep existing deployment secret fingerprints and reject unset secrets during token issuance and validation.
+
+### Changed
+
+- The optional local sensitive data scanner now uses the locked sanitizer 2.1.0 package and requires Node.js 26.13.1 or newer.
+
 ## [1.25.7] - 2026-11-28
 
 ### Fixed
