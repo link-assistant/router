@@ -231,12 +231,9 @@ fn operational_log_write_failure_is_quiet_and_retained_before_vendor_startup() {
                 Err(error) => panic!("health fixture: {error}"),
             }
         };
-        stream
-            .set_read_timeout(Some(Duration::from_secs(5)))
-            .unwrap();
-        let mut bytes = [0; 4096];
-        let count = stream.read(&mut bytes).unwrap();
-        assert!(String::from_utf8_lossy(&bytes[..count]).starts_with("GET /api/health"));
+        // macOS can inherit nonblocking mode from the listening socket.
+        stream.set_nonblocking(false).unwrap();
+        assert!(read_request(&mut stream).starts_with("GET /api/health"));
         // Logging opened successfully; subsequent writes now fail.
         fs::remove_file(&log_path).unwrap();
         fs::create_dir(&log_path).unwrap();

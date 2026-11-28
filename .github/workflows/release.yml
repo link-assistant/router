@@ -656,50 +656,52 @@ jobs:
       - name: Run doc tests
         run: cargo test --locked --doc --verbose
 
-      # Independent native provider/profile oracles. The existing job guard
-      # requires all eight JavaScript stages for this exact github.sha first.
+      # Archived automated translation oracles are opt-in during manual
+      # development. Source custody requires no-follow/nonblocking reads, so
+      # only the Linux and macOS matrix legs can opt in. The job's same-SHA
+      # JavaScript admission guard also applies to these steps.
       # Node 20, as in the JavaScript-first workflow: on Node 22.23, 24 and later
       # util.types.isProxy prints without a name, and the translator guards that
       # pin native function text reject it ("original source operations changed").
       - name: Setup Node for native profile source orchestration
         id: native-profile-node
-        if: ${{ always() && !cancelled() }}
+        if: ${{ always() && !cancelled() && vars.ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES == '1' && (runner.os == 'Linux' || runner.os == 'macOS') }}
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '20.20.2'
-      - run: npm install --global npm@11.21.3 --ignore-scripts
+      - name: Setup npm for native profile source orchestration
+        id: native-profile-npm
         if: ${{ always() && !cancelled() && steps.native-profile-node.outcome == 'success' }}
+        run: npm install --global npm@11.21.3 --ignore-scripts
 
       - name: Install locked native profile source dependencies
-        if: ${{ always() && !cancelled() }}
+        id: native-profile-dependencies
+        if: ${{ always() && !cancelled() && steps.native-profile-npm.outcome == 'success' }}
         run: |
           npm ci --prefix scripts/ci --ignore-scripts
           npm ci --prefix js --ignore-scripts
 
-      # JavaScript-only preflight: runs each profile's own source visitor. If the
-      # 2026-11-01 archives no longer match the checkout it warns and skips the
-      # oracles on pull requests and fails with maintainer instructions elsewhere.
+      # The JavaScript-only preflight requires all of the archived profile
+      # sources to match before the separately gated native runner can start.
       - name: Check native profile archives against the checkout
         id: native-profile-sources
-        if: ${{ always() && !cancelled() }}
+        if: ${{ always() && !cancelled() && steps.native-profile-dependencies.outcome == 'success' }}
         shell: bash
-        # Automated translation is temporarily not required (issue #797): stale
-        # archives warn and skip the oracles. Set to '1' to make them fatal again.
         env:
-          ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES: '0'
+          ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES: '1'
         run: |
           node --test scripts/test/check-native-profile-oracle-sources.test.mjs
           node scripts/check-native-profile-oracle-sources-20261101.mjs
 
       - name: Run copied native profile oracles after the JavaScript gate
-        if: ${{ always() && !cancelled() && steps.native-profile-sources.outputs.fresh == 'true' }}
+        if: ${{ always() && !cancelled() && steps.native-profile-sources.outcome == 'success' && steps.native-profile-sources.outputs.fresh == 'true' }}
         env:
           ROUTER_NATIVE_PROFILE_SHA: ${{ github.sha }}
           ROUTER_NATIVE_PROFILE_JAVASCRIPT: ${{ needs.javascript.result }}
         run: node scripts/run-native-profile-oracles-20261101.mjs
 
       - name: Retain complete native profile evidence
-        if: ${{ always() }}
+        if: ${{ always() && (steps.native-profile-sources.outcome == 'success' || steps.native-profile-sources.outcome == 'failure') }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: native-profile-oracles-${{ runner.os }}-${{ github.sha }}

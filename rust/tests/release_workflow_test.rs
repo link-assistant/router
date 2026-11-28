@@ -288,7 +288,7 @@ fn release_workflow_uses_supported_action_runtimes() {
     // docs/case-studies/issue-759/current/continuation-772.md).
     let native_profile_node = "      - name: Setup Node for native profile source orchestration
         id: native-profile-node
-        if: ${{ always() && !cancelled() }}
+        if: ${{ always() && !cancelled() && vars.ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES == '1' && (runner.os == 'Linux' || runner.os == 'macOS') }}
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '20.20.2'
