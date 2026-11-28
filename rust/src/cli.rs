@@ -60,6 +60,7 @@ use self::value_parsers::parse_truthy;
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
 
 mod parsing;
+pub(crate) use parsing::try_parse_invocation;
 pub use parsing::{parse_arguments, try_parse_arguments};
 
 /// Top-level CLI parser.
@@ -77,10 +78,6 @@ pub struct Cli {
     /// Subcommand to run. Defaults to `serve` when omitted.
     #[command(subcommand)]
     pub command: Option<Command>,
-
-    /// Runtime document initialized by the serving argument adapter.
-    #[arg(skip)]
-    pub runtime_config: Option<std::sync::Arc<crate::runtime_config::RuntimeConfig>>,
 
     /// IP address or network alias to resolve once and bind (legacy --host).
     #[arg(long, env = "ROUTER_HOST", default_value = "0.0.0.0", global = true)]

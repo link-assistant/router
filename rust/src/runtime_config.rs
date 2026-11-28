@@ -66,7 +66,7 @@ impl Live {
 }
 
 /// Configuration selected for one Router instance.
-pub struct RuntimeConfig {
+pub(crate) struct RuntimeConfig {
     path: PathBuf,
     audit_path: PathBuf,
     boot: Value,
@@ -129,7 +129,7 @@ impl RuntimeConfig {
         command: Command,
         arguments: Vec<OsString>,
         matches: &ArgMatches,
-    ) -> Result<Cli, &'static str> {
+    ) -> Result<(Cli, Arc<Self>), &'static str> {
         let data_dir = base
             .data_dir
             .clone()
@@ -143,7 +143,7 @@ impl RuntimeConfig {
         let bytes =
             storage::read(&path).map_err(|_| "could not read runtime configuration file")?;
         let input = cli_settings::Input::new(command, arguments, matches);
-        let (mut cli, document, live) = if let Some(bytes) = &bytes {
+        let (cli, document, live) = if let Some(bytes) = &bytes {
             let (_, document) = storage::decode(bytes)?;
             let live = Live::from_document(&document)?;
             let cli = input.resolve(&document)?;
@@ -154,7 +154,7 @@ impl RuntimeConfig {
         if let Some(destination) = cli.audit_log.as_deref() {
             require_distinct_audit_path(&path, destination)?;
         }
-        cli.runtime_config = Some(Arc::new(Self {
+        let config = Arc::new(Self {
             path,
             audit_path,
             boot: document.clone(),
@@ -166,8 +166,8 @@ impl RuntimeConfig {
                 error: None,
             }),
             live: RwLock::new(live),
-        }));
-        Ok(cli)
+        });
+        Ok((cli, config))
     }
 
     /// Start the file watcher. Its weak reference lets it stop with the server.

@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use std::net::SocketAddr;
 use std::panic::{RefUnwindSafe, UnwindSafe};
+use std::sync::Arc;
 
 use axum::Router;
 use axum::body::{Body, to_bytes};
@@ -9,7 +10,7 @@ use axum::http::{Request, StatusCode, header};
 use serde_json::{Value, json};
 use tower::ServiceExt as _;
 
-use super::{payload, redaction, schema, storage};
+use super::{RuntimeConfig, payload, redaction, schema, storage};
 use crate::app_state::AppState;
 use crate::token::{ADMIN_SCOPE, CONFIG_WRITE_SCOPE, IssueRequest};
 
@@ -18,7 +19,7 @@ mod boundaries;
 
 const ROOT: &str = "/api/management/config";
 
-fn cli(root: &std::path::Path, extra: &[&str]) -> crate::cli::Cli {
+fn invocation(root: &std::path::Path, extra: &[&str]) -> (crate::cli::Cli, Arc<RuntimeConfig>) {
     let mut args = vec![
         "router".into(),
         "--data-dir".into(),
@@ -27,7 +28,8 @@ fn cli(root: &std::path::Path, extra: &[&str]) -> crate::cli::Cli {
         "runtime-config-test-signing-fixture".into(),
     ];
     args.extend(extra.iter().copied().map(std::ffi::OsString::from));
-    crate::cli::try_parse_arguments(args).expect("valid runtime configuration")
+    let (cli, config) = crate::cli::try_parse_invocation(args).unwrap();
+    (cli, config.expect("serving configuration"))
 }
 
 fn state(root: &std::path::Path) -> AppState {
@@ -35,7 +37,7 @@ fn state(root: &std::path::Path) -> AppState {
     state.admin_key = Some("runtime-test-admin-key".into());
     state
         .request_log
-        .install_runtime_config(cli(root, &[]).runtime_config.unwrap());
+        .install_runtime_config(invocation(root, &[]).1);
     state
 }
 
@@ -98,10 +100,9 @@ fn schema_tracks_clap_and_toml_round_trips_edits() {
     let path = root.path().join("runtime.toml");
     let original = "# operator note\n[cli]\nport = 9081 # chosen service port\nverbose = true\n";
     std::fs::write(&path, original).unwrap();
-    let parsed = cli(root.path(), &["--port", "9082"]);
+    let (parsed, store) = invocation(root.path(), &["--port", "9082"]);
     assert_eq!(parsed.port, 9082);
     assert!(parsed.verbose);
-    let store = parsed.runtime_config.unwrap();
     assert_eq!(store.status()["overridden"], json!(["port"]));
     let (toml, mut document) = storage::decode(original).unwrap();
     assert!(

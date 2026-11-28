@@ -261,7 +261,7 @@ async fn payload_rules_filter_first_and_following_responses_websocket_turns() {
         format!("payload-json = '{payload}'\n"),
     )
     .unwrap();
-    let cli = crate::cli::try_parse_arguments(vec![
+    let (_, runtime_config) = crate::cli::try_parse_invocation(vec![
         "router".into(),
         "--data-dir".into(),
         data.path().as_os_str().into(),
@@ -277,7 +277,7 @@ async fn payload_rules_filter_first_and_following_responses_websocket_turns() {
     state.openai_compatible.supported_clients = vec!["codex".into()];
     state
         .request_log
-        .install_runtime_config(cli.runtime_config.unwrap());
+        .install_runtime_config(runtime_config.unwrap());
     let token = bound_codex_token(&state);
     let app = Router::new()
         .route(namespace_path(Namespace::OpenAi), get(openai))

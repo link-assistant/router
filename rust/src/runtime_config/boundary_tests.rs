@@ -24,10 +24,11 @@ fn the_audit_destination_cannot_overwrite_the_runtime_document() {
         .remove(std::ffi::OsStr::new("AUDIT_LOG"));
     context.set_env("ROUTER_RUNTIME_CONFIG", config_file.as_os_str());
 
-    let start = || context.scope(|| crate::cli::try_parse_arguments(vec!["router".into()]));
+    let start = || context.scope(|| crate::cli::try_parse_invocation(vec!["router".into()]));
     let original = "[cli]\nport = 9084\n";
     std::fs::write(&config_file, original).unwrap();
-    let live = start().unwrap().runtime_config.unwrap();
+    let (_, live) = start().unwrap();
+    let live = live.unwrap();
     let diagnostic = "runtime configuration and audit log require different paths";
 
     for destination in ["runtime.toml", "sub/../runtime.toml"] {
@@ -45,9 +46,9 @@ fn the_audit_destination_cannot_overwrite_the_runtime_document() {
     }
     assert_eq!(live.document(&[]).unwrap(), json!({"cli": {"port": 9084}}));
 
-    let parsed = context
+    let (parsed, _) = context
         .scope(|| {
-            crate::cli::try_parse_arguments(vec![
+            crate::cli::try_parse_invocation(vec![
                 "router".into(),
                 "--audit-log".into(),
                 "router-audit.jsonl".into(),
@@ -62,7 +63,7 @@ fn the_audit_destination_cannot_overwrite_the_runtime_document() {
     std::fs::remove_file(&config_file).unwrap();
     context.set_env("AUDIT_LOG", "sub/../runtime.toml");
     assert!(matches!(
-        context.scope(|| crate::cli::try_parse_arguments(vec!["router".into()])),
+        context.scope(|| crate::cli::try_parse_invocation(vec!["router".into()])),
         Err(error) if error.to_string().contains(diagnostic)
     ));
     assert!(!config_file.exists());

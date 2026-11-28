@@ -10,10 +10,12 @@
 //! ```
 use crate::cli::{Cli, Command};
 use crate::operation_context::{CapturedOutput, OperationContext};
+use crate::runtime_config::RuntimeConfig;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::ffi::OsString;
 use std::process::ExitCode;
+use std::sync::Arc;
 
 /// Versioned result returned by every operation and CLI JSON adapter.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, schemars::JsonSchema)]
@@ -85,8 +87,16 @@ fn result(operation: String, code: ExitCode, output: CapturedOutput) -> Operatio
 /// Perform any parsed CLI operation in-process, capturing output and errors.
 /// All state roots and external dependencies belong to `context`.
 pub async fn execute(
+    context: OperationContext,
+    cli: Cli,
+) -> Result<OperationResult, OperationError> {
+    execute_invocation(context, cli, None).await
+}
+
+async fn execute_invocation(
     mut context: OperationContext,
     mut cli: Cli,
+    runtime_config: Option<Arc<RuntimeConfig>>,
 ) -> Result<OperationResult, OperationError> {
     if let Some(home) = &context.home {
         cli.home = Some(home.clone());
@@ -99,7 +109,10 @@ pub async fn execute(
     force_json(&mut cli.command);
     let sink = context.output.clone();
     let code = crate::operation_context::ACTIVE
-        .scope(context, Box::pin(crate::runtime::dispatch(cli)))
+        .scope(
+            context,
+            Box::pin(crate::runtime::dispatch_invocation(cli, runtime_config)),
+        )
         .await;
     let captured = std::mem::take(&mut *sink.lock().expect("operation output lock"));
     let mut result = result(operation, code, captured);
@@ -159,8 +172,8 @@ pub async fn run_arguments(arguments: Vec<OsString>) -> ExitCode {
             keep
         });
     }
-    let cli = match crate::cli::try_parse_arguments(arguments) {
-        Ok(cli) => cli,
+    let (cli, runtime_config) = match crate::cli::try_parse_invocation(arguments) {
+        Ok(invocation) => invocation,
         Err(error) if json => {
             let response = result(
                 "cli-error".into(),
@@ -208,13 +221,13 @@ pub async fn run_arguments(arguments: Vec<OsString>) -> ExitCode {
         quiet,
         async move {
             if !json {
-                return Box::pin(crate::runtime::dispatch(cli)).await;
+                return Box::pin(crate::runtime::dispatch_invocation(cli, runtime_config)).await;
             }
             let mut context = OperationContext::default();
             if matches!(cli.command, Some(Command::Verify(_))) {
                 context.process_deadline = std::time::Duration::from_secs(3600);
             }
-            let response = match execute(context, cli).await {
+            let response = match execute_invocation(context, cli, runtime_config).await {
                 Ok(result) => result,
                 Err(error) => error.result,
             };

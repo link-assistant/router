@@ -18,6 +18,7 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
+use crate::runtime_config::RuntimeConfig;
 use crate::{auth_cli, bin_doctor, deploy_cli, logs_cli, recover_admin_cli, shutdown};
 
 use axum::middleware::from_fn_with_state;
@@ -43,6 +44,13 @@ pub use crate::process_adapter::run_from_environment;
 
 /// Execute a parsed request without spawning the Router binary.
 pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
+    Box::pin(dispatch_invocation(cli, None)).await
+}
+
+pub(crate) async fn dispatch_invocation(
+    cli: crate::cli::Cli,
+    runtime_config: Option<Arc<RuntimeConfig>>,
+) -> ExitCode {
     // The wrapper and managed-server commands do not start a router and must
     // not require server-only configuration or pollute client stdout with
     // router startup logs.
@@ -128,7 +136,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
     }
 
     match cli.command.as_ref() {
-        None | Some(Command::Serve) => match run_server(config, &cli, logger).await {
+        None | Some(Command::Serve) => match run_server(config, &cli, logger, runtime_config).await {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
                 // Startup failures must reach the terminal even when normal
@@ -270,6 +278,7 @@ async fn run_server(
     config: Config,
     cli: &crate::cli::Cli,
     logger: LogLazy,
+    runtime_config: Option<Arc<RuntimeConfig>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     link_assistant_router::management_config::ManagementConfig::validate_secrets(
         &config.token_secret,
@@ -475,11 +484,9 @@ async fn run_server(
     if let Some(router) = state.account_router.as_ref() {
         catalog_readers.extend(router.subscription_readers());
     }
-    if let Some(document) = &cli.runtime_config {
-        state
-            .request_log
-            .install_runtime_config(Arc::clone(document));
+    if let Some(document) = runtime_config {
         document.watch();
+        state.request_log.install_runtime_config(document);
     }
     let (catalog_refresh, source_refresh) = tokio::join!(
         link_assistant_router::model_catalog::refresh_catalogs_from_startup(
