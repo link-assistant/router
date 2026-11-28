@@ -19,7 +19,9 @@ fn the_audit_destination_cannot_overwrite_the_runtime_document() {
     std::fs::create_dir(root.path().join("sub")).unwrap();
     let mut context = crate::operation_context::OperationContext::isolated(root.path());
     context.working_directory = root.path().to_path_buf();
-    context.environment.remove(std::ffi::OsStr::new("AUDIT_LOG"));
+    context
+        .environment
+        .remove(std::ffi::OsStr::new("AUDIT_LOG"));
     context.set_env("ROUTER_RUNTIME_CONFIG", config_file.as_os_str());
 
     let start = || context.scope(|| crate::cli::try_parse_arguments(vec!["router".into()]));
