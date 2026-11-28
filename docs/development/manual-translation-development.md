@@ -80,6 +80,14 @@ Its structural audit is reused on an explicitly documented caller projection
 to protect the conserved strict source policy; that audit executes no strict
 stage and supplies no verification of translation.
 
+The release test matrix also leaves the archived 2026-11-01 copied-profile
+oracles unrun by default. Once the archives are refreshed and re-pinned, set
+the repository variable `ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES` to `1` to run
+their preflight and copied Rust tests on Linux and macOS. A stale archive, a
+failed source check or a failed copied test fails an opted-in job. Windows
+continues to run the standard Rust test matrix without the copied oracles,
+whose source reader requires `O_NOFOLLOW` and `O_NONBLOCK`.
+
 ## Rust and publication boundary
 
 The router itself is the Rust crate, so "the router system is working" can

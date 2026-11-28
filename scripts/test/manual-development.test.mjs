@@ -9,6 +9,7 @@ import { auditManualDevelopment, readWorkflowSources } from '../check-manual-dev
 import { MANUAL_STAGES, MANUAL_WORKFLOW, MANUAL_AGGREGATE, RUST_BLOCK, LANE_FILES } from '../manual-development-policy.mjs';
 import { runManualDevelopment } from '../check-manual-development-local.mjs';
 import { auditWorkflows, STAGES } from '../check-js-first-workflows.mjs';
+import './check-native-profile-oracle-sources.test.mjs';
 const require = createRequire(new URL('../ci/package.json', import.meta.url));
 const { parse, stringify } = require('yaml');
 const sources = readWorkflowSources();
@@ -89,6 +90,32 @@ test('every caller retains its same-SHA Rust admission guard, original dependenc
   assert.ok(mutation('bindings.yml', doc => { delete doc.jobs.javascript.if; }).length);
   assert.ok(mutation('release.yml', doc => { doc.jobs['release-javascript'].with.sha = 'main'; }).length);
   assert.ok(mutation('javascript-first.yml', doc => { doc.jobs.parity.steps = [{ run: 'true' }]; }).length);
+});
+
+test('archived native profiles require explicit opt-in on supported runners', { timeout: 30_000 }, () => {
+  const { test: job } = parse(sources['release.yml']).jobs;
+  const steps = Object.fromEntries(job.steps.filter(step => step.id).map(step => [step.id, step]));
+  const runner = job.steps.find(step => step.run === 'node scripts/run-native-profile-oracles-20261101.mjs');
+  const evidence = job.steps.find(step => step.name === 'Retain complete native profile evidence');
+  assert.equal(steps['native-profile-node'].if,
+    "${{ always() && !cancelled() && vars.ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES == '1' && (runner.os == 'Linux' || runner.os == 'macOS') }}");
+  for (const [name, prerequisite] of [
+    ['native-profile-npm', 'native-profile-node'],
+    ['native-profile-dependencies', 'native-profile-npm'],
+    ['native-profile-sources', 'native-profile-dependencies'],
+  ]) {
+    assert.equal(steps[name].if, `\${{ always() && !cancelled() && steps.${prerequisite}.outcome == 'success' }}`);
+    assert.equal(steps[name]['continue-on-error'], undefined);
+  }
+  assert.equal(steps['native-profile-sources'].env.ROUTER_REQUIRE_NATIVE_PROFILE_ORACLES, '1');
+  assert.equal(runner.if,
+    "${{ always() && !cancelled() && steps.native-profile-sources.outcome == 'success' && steps.native-profile-sources.outputs.fresh == 'true' }}");
+  assert.equal(runner['continue-on-error'], undefined);
+  assert.equal(evidence.if,
+    "${{ always() && (steps.native-profile-sources.outcome == 'success' || steps.native-profile-sources.outcome == 'failure') }}");
+  assert.equal(evidence.with['if-no-files-found'], 'error');
+  assert.deepEqual(job.strategy.matrix.os, ['ubuntu-24.04', 'macos-26', 'windows-latest']);
+  assert.equal(job.strategy['fail-fast'], false);
 });
 
 test('base coverage is an explicit manual diagnostic and requires the gated base', { timeout: 30_000 }, () => {
